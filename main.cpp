@@ -5,22 +5,22 @@
 int initialize_listener(PORT)
 {
 	int listener;
-	struct protoent* protocol = getprotobyname("TCP");
+	struct protoent* protocol = getprotobyname(/*"TCP"*/);
 
 	if (!protocol)
-		//error;
+		return (-1);
 
 	if (-1 == socket(AF_INET, SOCK_STREAM, protocol->p_proto);//(IPv4, necesario para TCP, TCP en si)
-		//error;
+		return (-1);
 	if (-1 == bind(listener, /**/, /**/))
-		//error;
+		return (-1);
 	//mas posible configuracion;
 
 	if (-1 == listen(listener, /*whatever number*/))
-		//error;
+		return (-1);
 	return (listener);	
 }
-int cycle(struct pollfd* monitored)
+int cycle(struct pollfd* monitored, PASSWORD)
 {
 	int pollret;
 
@@ -43,7 +43,11 @@ int main (int argc, char** argv)
 	if (argc !=3)
 		//error
 	listener = initialize_listener(PORT);
-
+	if (-1 == listener)
+	{
+		//possibly use my pterror from minishell _glopez-m
+		return (1);//good that no malloc was done yet
+	}
 	monitored = malloc(2 * sizeof(struct pollfd);
 	if (!monitored)
 		//error
@@ -51,7 +55,7 @@ int main (int argc, char** argv)
 			pero cuando sea por intentar aceptar una nueva conexion, entonces
 			pasaremos de ella y continuaremos funcionando
 		*/
-	cycle(monitored);
+	cycle(monitored, PASSWORD);
 	
 	return (0);
 }
