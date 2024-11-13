@@ -1,0 +1,37 @@
+//Tengase en mente que las llamadas a funcion estan patilladas
+//	y pueden ser incorrectas.
+Primero preparamos lo que debamos
+{
+	Creamos el socket que escucha
+	{
+		int listener;
+		struct protoent* protocol = getprotobyname("TCP")
+		struct pollfd* monitored = malloc(2 * sizeof(struct pollfd);
+
+		if (!protocol)
+			//error;
+
+		if (-1 == socket(AF_INET, SOCK_STREAM, protocol->p_proto);//(IPv4, necesario para TCP, TCP en si)
+			//error;
+		if (-1 == bind(listener, /**/, /**/))
+			//error;
+		//mas posible configuracion;
+
+		if(listen(listener, /*whatever number*/) == -1)
+			//error;
+		
+		if (!monitored)
+	}
+}
+
+Luego hacemos while()
+{
+	poll()
+	| A
+	V |
+	hacemos lo indicado
+
+"hacer lo indicado" seguramente conste de
+	leer que han escrito;
+	enviarlo al resto de clientes;
+}

@@ -1,0 +1,82 @@
+getprotobyname()
+	Cuando llamas a socket(), el 3r argumento es un numero que indica que protocolo usar con el 2o argumento,
+		esta es la funcion con la que consigues ese numero.
+
+socket()
+	Usaremos esta funcion solo para el primer socket.
+	Probablemente lo usemos con AF_INET o AF_INET6, y SOCK_STREAM.
+
+bind()
+	Assigna el socket a una direccion.
+
+connect()
+	Conecta el socket a una direccion.
+
+listen()
+	Marca que el socket puede aceptar nuevas conexiones con accept().
+
+poll()
+	Le pasamos sockets y nos da informacion, principalmente cual de los fds tiene cosas a hacer.
+	Segun apriego, nos puede devolver el fd del propio servidor,
+		en cuyo caso tendremos que crear un nuevo fd para esa nueva conexion.
+
+accept()
+	Coge el socket que esta escuchando y crea un nuevo socket para la nueva conexion.
+	El socket que escucha no se ve afectado.
+
+send()
+	Equivalente a write() que nos permite poner algunas flags.
+
+recv()
+	Equivalente a read() que nos permite poner algunas flags.
+
+setsockopt()
+	Nos permite configurar cosas del socket, aunque el que exactamente aun no lo entiendo.
+
+getsockname()
+	No entiendo como usaremos esto.
+
+gethostbyname()
+	Obsoleto, en su lugar deberiamos usar getaddrinfo()
+
+getaddrinfo()
+	No entiendo como usaremos esto.
+
+freeaddrinfo()
+	Libera lo que nos devuelve getaddrinfo().
+
+lseek()
+	Permite recolocar a donde de un archivo apunta el fd (por decirlo de alun modo).
+	Esto quiere decir que puedes volver a una posicion previa sin tener que cerrar
+		el fd, reabrirlo e ir hasta el lugar.
+	No funciona para sockets, pipes o FIFOs.
+
+fcntl()
+	File control (asumo): puede trastear con los fds de varias maneras.
+	Puede duplicarlos.
+	Puede cambiar sus flags.
+	Puede hacer un/lock de ellos para las condiciones de carrera.
+	Teniendo en cuenta lo que me he dejado por leer,
+		probablemente ambien te hace la cama.
+
+htons()
+htonl()
+ntohs()
+ntohl()
+	Estas 4 convierten (to) el "orden de los bites" entre el (h)ost y la red ((n)etwork),
+		tanto para enteros de 16 bits (s) como de de 32 (l).
+
+fstat()
+	Nos dice cosas sobre un archivo al que esta asociado un fd.
+
+signal()
+	Ya nos lo conocemos
+
+sigaction()
+	Nos conocemos este tambien?
+
+inet_addr()
+	Aun no lo he mirado.
+
+inet_ntoa()
+	Aun no lo he mirado.
