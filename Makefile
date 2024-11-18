@@ -8,9 +8,9 @@ ifeq ($(DEBUG), TRUE)
 	CFLAGS +=  -g
 endif
 
-HEADS = ft_irc.h
+HEADS = ft_irc.hpp
 
-SRC = main.h
+SRC = main.cpp
 
 OBJS = $(SRC:%.cpp=%.o)
 

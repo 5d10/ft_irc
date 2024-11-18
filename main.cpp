@@ -2,31 +2,45 @@
 
 // PORT and PASSWORD ar just placeholders to be replaced with actual variables
 
-int initialize_listener(PORT)
+int initialize_listener(const int port)
 {
 	int listener;
-	struct protoent* protocol = getprotobyname(/*"TCP"*/);
+	struct protoent* protocol = getprotobyname("TCP");
+	struct sockaddr_in test;//where in the std is this defined? don't ask me
 
 	if (!protocol)
+	{
+		std::cerr << "Bad ini of protocol" << std::endl;//cerr used
+		return (-1);
+	}
+	listener = socket(AF_INET, SOCK_STREAM, 0);//protocol->p_proto);
+	if (-1 == listener)//(IPv4, necesario para TCP, TCP en si)
 		return (-1);
 
-	if (-1 == socket(AF_INET, SOCK_STREAM, protocol->p_proto);//(IPv4, necesario para TCP, TCP en si)
+	bzero(&test, sizeof(struct sockaddr_in));
+	test.sin_family = AF_INET;
+	test.sin_addr.s_addr = htonl(2130706433);// presumably 127.0.0.1 whic iirc is localhost
+	test.sin_port = htons(port);//why htonl and htons?
+	//strncpy(test.sin_path, path, sizeof(test.sin_path) -1);//please check for overflow
+	if (-1 == bind(listener, reinterpret_cast<const struct sockaddr*>(&test), sizeof(test)))
+	{
+		std::cerr << "Failed to bind" << std::endl;//cerr used
 		return (-1);
-	if (-1 == bind(listener, /**/, /**/))
-		return (-1);
+	}
+
 	//mas posible configuracion;
 
-	if (-1 == listen(listener, /*whatever number*/))
+	if (-1 == listen(listener, 0/*whatever number*/))
 		return (-1);
 	return (listener);	
 }
-int cycle(struct pollfd* monitored, PASSWORD)
+int cycle(struct pollfd* monitored, const char *const password)
 {
 	int pollret;
-
+	(void)password;
 	while (1)
 	{
-		pollret = poll(monitored, /**/, /**/);	
+		pollret = poll(monitored, 0/**/, 0/**/);	
 		/*
 			identify which fds we want to do something with
 			DO IT
@@ -37,25 +51,28 @@ int cycle(struct pollfd* monitored, PASSWORD)
 
 int main (int argc, char** argv)
 {
-	int listner;
+	int listener;
 	struct pollfd* monitored;
 
 	if (argc !=3)
-		//error
-	listener = initialize_listener(PORT);
+	{
+		std::cout << "Incorrect amount of arguments. Expected 2, have " << argc-1 << std::endl;
+		return (1);
+	}
+
+
+	listener = initialize_listener(std::atoi(argv[1]));
 	if (-1 == listener)
 	{
 		//possibly use my pterror from minishell _glopez-m
 		return (1);//good that no malloc was done yet
 	}
-	monitored = malloc(2 * sizeof(struct pollfd);
+	monitored = static_cast<struct pollfd*>(malloc(2 * sizeof(struct pollfd)));
 	if (!monitored)
-		//error
-		/* este que seria por no tener memoria al intentar crearlo siquiera, saldriamos
-			pero cuando sea por intentar aceptar una nueva conexion, entonces
-			pasaremos de ella y continuaremos funcionando
-		*/
-	cycle(monitored, PASSWORD);
-	
+	{
+		close(listener);
+		return (ENOMEM);
+	}
+	cycle(monitored, argv[2]);
 	return (0);
 }
