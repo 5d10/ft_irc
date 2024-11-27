@@ -11,5 +11,4 @@
 # include <strings.h>
 
 # define MAX_CONN_QUEUE 128
-# define POLL_TIMEOUT 5000
 #endif

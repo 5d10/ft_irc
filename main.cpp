@@ -13,11 +13,11 @@ int initialize_listener(const int port)
 		std::cerr << "Bad ini of protocol" << std::endl;//cerr used
 		return (-1);
 	}
-	listener = socket(AF_INET, SOCK_STREAM, 0);//protocol->p_proto);
-	if (-1 == listener)//(IPv4, necesario para TCP, TCP en si)
+	listener = socket(AF_INET /* IPv4 */, SOCK_STREAM | SOCK_NONBLOCK /* TCP and Non-Blocking */, protocol->p_proto /* TCP Protocol */);
+	if (-1 == listener)
 		return (-1);
 
-	bzero(&test, sizeof(struct sockaddr_in));
+	bzero(&test, sizeof(struct sockaddr_in)); // are- are we allowed to use bzero and other funcs??? is there no cpp std98 equivalent?
 	test.sin_family = AF_INET;
 	test.sin_addr.s_addr = htonl(2130706433);// presumably 127.0.0.1 whic iirc is localhost
 	test.sin_port = htons(port);//why htonl and htons? // https://linux.die.net/man/3/htonl "htonl, htons, ntohl, ntohs - convert values between host and network byte order" tl;dr: network shit
@@ -40,12 +40,20 @@ int cycle(struct pollfd* monitored, const char *const password)
 	(void)password;
 	while (1)
 	{
-		pollret = poll(monitored, 0/*array of file descriptors, currently NULL*/, POLL_TIMEOUT); // WARNING: Poll may be a blocking function (Source: https://man7.org/linux/man-pages/man2/poll.2.html, "The timeout argument specifies the number of milliseconds that poll() should block waiting for a file descriptor to become ready.", keyword BLOCK)
-		/*
-			identify which fds we want to do something with
-			DO IT
-		*/
-		(void)pollret; // cound't compile without this
+		pollret = poll(monitored, 2 /*length of monitored (array of fds), var is of type nfds_t*/, 0 /*Timeout in ms, set to 0 so it's non-blocking ("If timeout is zero, then poll() will return without blocking.", Source: https://man.freebsd.org/cgi/man.cgi?poll)*/);
+		if (pollret > 0)
+		{
+			std::cout << "Detected activity on " << pollret << " socket(s)!" << std::endl;
+			/*
+				identify which fds we want to do something with
+				DO IT
+			*/
+		}
+		else if (pollret)
+		{
+			std::cerr << "Errno: " << errno << std::endl; // cerr used
+			return (-1);
+		}
 	}
 	return (0);//in case we want to return errors
 }
@@ -55,7 +63,7 @@ int main (int argc, char** argv)
 	int listener;
 	struct pollfd* monitored;
 
-	if (argc !=3)
+	if (argc != 3)
 	{
 		std::cout << "Incorrect amount of arguments. Expected 2, have " << argc-1 << std::endl;
 		return (1);
@@ -68,12 +76,13 @@ int main (int argc, char** argv)
 		//possibly use my pterror from minishell _glopez-m
 		return (1);//good that no malloc was done yet
 	}
-	monitored = static_cast<struct pollfd*>(malloc(2 * sizeof(struct pollfd)));
+	monitored = static_cast<struct pollfd*>(malloc(2 * sizeof(struct pollfd))); // erm... what the malloc? (-42 social credit) (can / should we use a vector?)
 	if (!monitored)
 	{
 		close(listener);
 		return (ENOMEM);
 	}
+	std::cout << "Sockets ready! Listening..." << std::endl;
 	cycle(monitored, argv[2]);
 	return (0);
 }
