@@ -27,7 +27,6 @@ int initialize_listener(const int port)
 		std::cerr << "Failed to bind" << std::endl;//cerr used
 		return (-1);
 	}
-
 	//mas posible configuracion;
 
 	if (-1 == listen(listener, MAX_CONN_QUEUE))
@@ -46,47 +45,64 @@ int cycle(struct pollfd* monitored, const char *const password)
 			for	(int i = 0; i < 2; i++)
 			{
 				struct pollfd current = monitored[i];
-				if (current.events || current.revents)
+				if (current.revents) { continue; }
+				std::cout << "--------------------------------------------------------------------" << std::endl;
+				// std::cout << "POLLIN: " << POLLIN << std::endl; // 1
+				// std::cout << "POLLRDNORM: " << POLLRDNORM << std::endl; // 64
+				// std::cout << "POLLRDBAND: " << POLLRDBAND << std::endl; // 128
+				// std::cout << "POLLPRI: " << POLLPRI << std::endl; // 2
+				// std::cout << "POLLOUT: " << POLLOUT << std::endl; // 4
+				// std::cout << "POLLWRNORM: " << POLLWRNORM << std::endl; // 256
+				// std::cout << "POLLWRBAND: " << POLLWRBAND << std::endl; // 512
+				// std::cout << "POLLERR: " << POLLERR << std::endl; // 8
+				// std::cout << "POLLHUP: " << POLLHUP << std::endl; // 16
+				// std::cout << "POLLRDHUP: " << POLLRDHUP << std::endl; // 8192
+				// std::cout << "POLLNVAL: " << POLLNVAL << std::endl; // 32
+				std::cout << "Potential activity on monitored[" << i <<"], fd " << current.fd << std::endl;
+				if (current.events)
 				{
-					std::cout << "--------------------------------------------------------------------" << std::endl;
-					// std::cout << "POLLIN: " << POLLIN << std::endl; // 1
-					// std::cout << "POLLRDNORM: " << POLLRDNORM << std::endl; // 64
-					// std::cout << "POLLRDBAND: " << POLLRDBAND << std::endl; // 128
-					// std::cout << "POLLPRI: " << POLLPRI << std::endl; // 2
-					// std::cout << "POLLOUT: " << POLLOUT << std::endl; // 4
-					// std::cout << "POLLWRNORM: " << POLLWRNORM << std::endl; // 256
-					// std::cout << "POLLWRBAND: " << POLLWRBAND << std::endl; // 512
-					// std::cout << "POLLERR: " << POLLERR << std::endl; // 8
-					// std::cout << "POLLHUP: " << POLLHUP << std::endl; // 16
-					// std::cout << "POLLRDHUP: " << POLLRDHUP << std::endl; // 8192
-					// std::cout << "POLLNVAL: " << POLLNVAL << std::endl; // 32
-					std::cout << "Potential activity on monitored[" << i <<"], fd " << current.fd << std::endl;
-					if (current.events)
+					std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
+					if (current.events & POLLIN)
+						std::cout << "- POLLIN" << std::endl;
+					if (current.events & POLLOUT)
+						std::cout << "- POLLOUT" << std::endl;
+					if (current.events & POLLNVAL)
+						std::cout << "- POLLNVAL" << std::endl;
+				}
+				else
+					std::cout << "No Events"<< std::endl;
+				std::cout << std::endl;
+				if (current.revents)
+				{
+					std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
+					if (current.revents & POLLIN)
+						std::cout << "- POLLIN" << std::endl;
+					if (current.revents & POLLOUT)
+						std::cout << "- POLLOUT" << std::endl;
+					if (current.revents & POLLNVAL)
+						std::cout << "- POLLNVAL" << std::endl;
+				}
+				else
+					std::cout << "No Revents"<< std::endl;
+				std::cout << "--------------------------------------------------------------------" << std::endl;
+				// https://www.ibm.com/docs/en/i/7.4?topic=designs-using-poll-instead-select
+				if (current.fd == -1)
+				{
+					int new_socket;
+					do
 					{
-						std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
-						if (current.events & POLLIN)
-							std::cout << "- POLLIN" << std::endl;
-						if (current.events & POLLOUT)
-							std::cout << "- POLLOUT" << std::endl;
-						if (current.events & POLLNVAL)
-							std::cout << "- POLLNVAL" << std::endl;
+						new_socket = accept(-1, NULL, NULL);
+						if (new_socket < 0)
+						{
+							if (errno != EWOULDBLOCK)
+								return (-1);
+							break;
+						}
+						std::cout << "New incoming connection - " << new_socket << std::endl;
+						monitored[1].fd = new_socket;
+						monitored[1].events = POLLIN;
 					}
-					else
-						std::cout << "No Events"<< std::endl;
-					std::cout << std::endl;
-					if (current.revents)
-					{
-						std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
-						if (current.revents & POLLIN)
-							std::cout << "- POLLIN" << std::endl;
-						if (current.revents & POLLOUT)
-							std::cout << "- POLLOUT" << std::endl;
-						if (current.revents & POLLNVAL)
-							std::cout << "- POLLNVAL" << std::endl;
-					}
-					else
-						std::cout << "No Revents"<< std::endl;
-					std::cout << "--------------------------------------------------------------------" << std::endl;
+					while (new_socket != -1);
 				}
 			}
 			/*
@@ -125,7 +141,12 @@ int main (int argc, char** argv)
 		close(listener);
 		return (ENOMEM);
 	}
-	std::cout << "Sockets ready!" << std::endl;
+
+	// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
+
+
+	
+	std::cout << "Socket ready! Listening..." << std::endl;
 	cycle(monitored, argv[2]);
 	return (0);
 }
