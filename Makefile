@@ -32,3 +32,6 @@ re: fclean all
 
 debug:
 	make DEBUG=TRUE
+
+run: $(NAME)
+	./$(NAME) 6667 ""

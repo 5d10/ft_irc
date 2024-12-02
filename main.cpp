@@ -90,8 +90,17 @@ int cycle(struct pollfd* monitored, const char *const password)
 							// close(server_fd);
 							return 1;
 						}
-						buffer[bytes_read] = '\0'; // Null-terminate the buffer
-						std::cout << "Received message: " << buffer << std::endl;
+						else if (bytes_read == 0)
+						{
+							std::cout << "Client Disconnected" << std::endl;
+							close(current.fd);
+							return 0; // hey so um don't do this when we have multiple clients for obvious reasons???
+						}
+						else
+						{
+							buffer[bytes_read] = '\0'; // Null-terminate the buffer
+							std::cout << "Received message: " << buffer << std::endl;
+						}
 					}
 					if (current.revents & POLLOUT)
 						std::cout << "- POLLOUT" << std::endl;
