@@ -1,5 +1,7 @@
 #include "ft_irc.hpp"
 
+#include <cstdio> // std::perror (no lo meto en el header porque no se si puede usarse o no el perror)
+
 // PORT and PASSWORD ar just placeholders to be replaced with actual variables
 
 int initialize_listener(const int port)
@@ -45,7 +47,7 @@ int cycle(struct pollfd* monitored, const char *const password)
 			for	(int i = 0; i < 2; i++)
 			{
 				struct pollfd current = monitored[i];
-				if (current.revents) { continue; }
+				if (!(current.revents & current.events)) { continue; }
 				std::cout << "--------------------------------------------------------------------" << std::endl;
 				// std::cout << "POLLIN: " << POLLIN << std::endl; // 1
 				// std::cout << "POLLRDNORM: " << POLLRDNORM << std::endl; // 64
@@ -58,7 +60,7 @@ int cycle(struct pollfd* monitored, const char *const password)
 				// std::cout << "POLLHUP: " << POLLHUP << std::endl; // 16
 				// std::cout << "POLLRDHUP: " << POLLRDHUP << std::endl; // 8192
 				// std::cout << "POLLNVAL: " << POLLNVAL << std::endl; // 32
-				std::cout << "Potential activity on monitored[" << i <<"], fd " << current.fd << std::endl;
+				std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
 				if (current.events)
 				{
 					std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
@@ -76,7 +78,21 @@ int cycle(struct pollfd* monitored, const char *const password)
 				{
 					std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
 					if (current.revents & POLLIN)
+					{
 						std::cout << "- POLLIN" << std::endl;
+
+						// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
+						char buffer[256];
+						ssize_t bytes_read = read(current.fd, buffer, sizeof(buffer) - 1);
+						if (bytes_read < 0) {
+							perror("read");
+							close(current.fd);
+							// close(server_fd);
+							return 1;
+						}
+						buffer[bytes_read] = '\0'; // Null-terminate the buffer
+						std::cout << "Received message: " << buffer << std::endl;
+					}
 					if (current.revents & POLLOUT)
 						std::cout << "- POLLOUT" << std::endl;
 					if (current.revents & POLLNVAL)
@@ -85,30 +101,7 @@ int cycle(struct pollfd* monitored, const char *const password)
 				else
 					std::cout << "No Revents"<< std::endl;
 				std::cout << "--------------------------------------------------------------------" << std::endl;
-				// https://www.ibm.com/docs/en/i/7.4?topic=designs-using-poll-instead-select
-				if (current.fd == -1)
-				{
-					int new_socket;
-					do
-					{
-						new_socket = accept(-1, NULL, NULL);
-						if (new_socket < 0)
-						{
-							if (errno != EWOULDBLOCK)
-								return (-1);
-							break;
-						}
-						std::cout << "New incoming connection - " << new_socket << std::endl;
-						monitored[1].fd = new_socket;
-						monitored[1].events = POLLIN;
-					}
-					while (new_socket != -1);
-				}
 			}
-			/*
-				identify which fds we want to do something with
-				DO IT
-			*/
 		}
 		else if (pollret)
 		{
@@ -141,12 +134,19 @@ int main (int argc, char** argv)
 		close(listener);
 		return (ENOMEM);
 	}
+	std::cout << "Socket ready! Listening on port " << std::atoi(argv[1]) << "..." << std::endl;
 
 	// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
-
-
+	struct sockaddr_in client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+	int client_fd = -1;
+    while (client_fd < 0)
+		client_fd = accept(listener, (struct sockaddr *)&client_addr, &client_addr_len); // returns -1 on failure, usuall EAGAIN due to non-block
+	std::cout << "WORLD WIDE NOISE 🗣 🗣 🗣" << std::endl;
 	
-	std::cout << "Socket ready! Listening..." << std::endl;
+	monitored[0].fd = client_fd;
+	monitored[0].events = POLLIN;
+
 	cycle(monitored, argv[2]);
 	return (0);
 }
