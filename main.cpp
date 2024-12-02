@@ -82,24 +82,28 @@ int cycle(struct pollfd* monitored, const char *const password)
 						std::cout << "- POLLIN" << std::endl;
 
 						// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
-						char buffer[256];
+						char buffer[2];
 						ssize_t bytes_read = read(current.fd, buffer, sizeof(buffer) - 1);
-						if (bytes_read < 0) {
-							perror("read");
-							close(current.fd);
-							// close(server_fd);
-							return 1;
+						std::cout << "Received message: ";
+						while (bytes_read > 0 && buffer[bytes_read - 1] != '\n')
+						{
+							buffer[bytes_read] = '\0'; // Null-terminate the buffer
+							std::cout << buffer;
+							bytes_read = read(current.fd, buffer, sizeof(buffer) - 1);
 						}
-						else if (bytes_read == 0)
+						std::cout << std::endl;
+						if (!bytes_read)
 						{
 							std::cout << "Client Disconnected" << std::endl;
 							close(current.fd);
 							return 0; // hey so um don't do this when we have multiple clients for obvious reasons???
 						}
-						else
+						if (bytes_read < 0)
 						{
-							buffer[bytes_read] = '\0'; // Null-terminate the buffer
-							std::cout << "Received message: " << buffer << std::endl;
+							perror("read");
+							close(current.fd);
+							// close(server_fd);
+							return 1;
 						}
 					}
 					if (current.revents & POLLOUT)
@@ -150,7 +154,7 @@ int main (int argc, char** argv)
     socklen_t client_addr_len = sizeof(client_addr);
 	int client_fd = -1;
     while (client_fd < 0)
-		client_fd = accept(listener, (struct sockaddr *)&client_addr, &client_addr_len); // returns -1 on failure, usuall EAGAIN due to non-block
+		client_fd = accept(listener, reinterpret_cast<struct sockaddr*>(&client_addr), &client_addr_len); // returns -1 on failure, usuall EAGAIN due to non-block
 	std::cout << "WORLD WIDE NOISE 🗣 🗣 🗣" << std::endl;
 	
 	monitored[0].fd = client_fd;
