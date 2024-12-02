@@ -9,6 +9,7 @@
 # include <errno.h>
 # include <unistd.h>
 # include <strings.h>
+# include <vector>
 
 # define MAX_CONN_QUEUE 128
 #endif
