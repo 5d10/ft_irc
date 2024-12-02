@@ -62,7 +62,7 @@ int cycle(struct pollfd* monitored, const char *const password)
 				// std::cout << "POLLNVAL: " << POLLNVAL << std::endl; // 32
 				std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
 				if (current.events)
-				{
+				{//events are the ones we will be checking with, so we are the ones setting the values. Do we need to debug print them?
 					std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
 					if (current.events & POLLIN)
 						std::cout << "- POLLIN" << std::endl;
@@ -97,13 +97,14 @@ int cycle(struct pollfd* monitored, const char *const password)
 							std::cout << "Client Disconnected" << std::endl;
 							close(current.fd);
 							return 0; // hey so um don't do this when we have multiple clients for obvious reasons???
+							//my brother in christ, the keyword you want is "continue;"
 						}
 						if (bytes_read < 0)
 						{
 							perror("read");
 							close(current.fd);
 							// close(server_fd);
-							return 1;
+							return 1;//don't return here either, handle the error here and "continue;" only return if we are truly fucked
 						}
 					}
 					if (current.revents & POLLOUT)
