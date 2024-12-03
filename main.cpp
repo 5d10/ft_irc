@@ -46,7 +46,7 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 		pollret = poll(monitored.data(), monitored.size() /*length of monitored (array of fds), var is of type nfds_t*/, 0 /*Timeout in ms, set to 0 so it's non-blocking ("If timeout is zero, then poll() will return without blocking.", Source: https://man.freebsd.org/cgi/man.cgi?poll)*/);
 		if (pollret > 0)
 		{
-			for	(int i = 0; i < monit_size && pollret; i++)
+			for	(int i = 0; i < monit_size && pollret; i++) // we're potentially adding / removing clients from the vector, careful about the index and where it ends
 			{
 				struct pollfd current = monitored[i];
 				std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;//debug
@@ -64,35 +64,23 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 				// std::cout << "POLLRDHUP: " << POLLRDHUP << std::endl; // 8192
 				// std::cout << "POLLNVAL: " << POLLNVAL << std::endl; // 32
 				std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
-<<<<<<< HEAD
-			//	if (current.events)
-			//	{//events are the ones we will be checking with, so we are the ones setting the values. Do we need to debug print them?
-			//		std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
-			//		if (current.events & POLLIN)
-			//			std::cout << "- POLLIN" << std::endl;
-			//		if (current.events & POLLOUT)
-			//			std::cout << "- POLLOUT" << std::endl;
-			//		if (current.events & POLLNVAL)
-			//			std::cout << "- POLLNVAL" << std::endl;
-			//	}
-			//	else
-			//		std::cout << "No Events"<< std::endl;
-			//	std::cout << std::endl;
+				// if (current.events)
+				// {//events are the ones we will be checking with, so we are the ones setting the values. Do we need to debug print them?
+				// 	std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
+				// 	if (current.events & POLLIN)
+				// 		std::cout << "- POLLIN" << std::endl;
+				// 	if (current.events & POLLOUT)
+				// 		std::cout << "- POLLOUT" << std::endl;
+				// 	if (current.events & POLLNVAL)
+				// 		std::cout << "- POLLNVAL" << std::endl;
+				// }
+				// else
+				// 	std::cout << "No Events"<< std::endl;
+				// std::cout << std::endl;
 				if (!current.revents)
 				{
 					std::cout << "No Revents"<< std::endl;//debug
 					continue;
-=======
-				if (current.events)
-				{//events are the ones we will be checking with, so we are the ones setting the values. Do we need to debug print them?
-					std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
-					if (current.events & POLLIN)
-						std::cout << "- POLLIN" << std::endl;
-					if (current.events & POLLOUT)
-						std::cout << "- POLLOUT" << std::endl;
-					if (current.events & POLLNVAL)
-						std::cout << "- POLLNVAL" << std::endl;
->>>>>>> 0947fd88d0c3d7e82706d6f5a2da6fd0d04227f8
 				}
 				std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
 				if (i == 0 && (current.revents & current.events)) //listener will always be [0]
@@ -105,7 +93,7 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 				    while (client_fd < 0)//this should not be needed
 						client_fd = accept(monitored[0].fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_addr_len); // returns -1 on failure, usually EAGAIN due to non-block//if properly programmed, we never get to see EAGAIN
 					newcomer.fd = client_fd;
-					newcomer.events = POLLIN /*we might want some global precompiler thing for these, in case its not just POLLIN walways*/;
+					newcomer.events = POLLIN | POLLHUP /*we might want some global precompiler thing for these, in case its not just POLLIN walways*/;
 					newcomer.revents = 0;
 					monitored.push_back(newcomer);
 					//do we want to do anything else with the newcomer? like putting there recent messages or something
@@ -115,17 +103,18 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 				{
 					std::cout << "- POLLIN" << std::endl;
 
-<<<<<<< HEAD
 					// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
 					std::string msg = "";
 					char buffer[1];
 					ssize_t bytes_read = read(current.fd, buffer, sizeof(buffer));
 					while (bytes_read > 0 && buffer[bytes_read - 1] != '\n')
 					{
-						for (size_t j = 0; j < sizeof(buffer); j++) { msg += buffer[j]; }	
-						bytes_read = read(current.fd, buffer, sizeof(buffer));
+						for (size_t j = 0; j < sizeof(buffer); j++)
+							msg += buffer[j];
+						std::cout  << "msg: " << msg << std::endl;
+						bytes_read = read(current.fd, buffer, sizeof(buffer)); // this can block? (nc -C + Ctrl-D) // is client socket non-blocking?
 					}
-					if (!bytes_read)//consider checking for POLLHUP instead
+					if (!bytes_read)//consider checking for POLLHUP instead // https://stackoverflow.com/questions/74627334/no-pollhup-event-when-poll-on-tcp-socket-and-remote-closed
 					{
 						std::cout << "Client Disconnected" << std::endl;//debug?
 						close(current.fd);
@@ -140,42 +129,15 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 						return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
 					}
 					else
-					{
 						std::cout << "Received message: " << msg << std::endl;
-=======
-						// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
-						char buffer[2];
-						ssize_t bytes_read = read(current.fd, buffer, sizeof(buffer) - 1);
-						std::cout << "Received message: ";
-						while (bytes_read > 0 && buffer[bytes_read - 1] != '\n')
-						{
-							buffer[bytes_read] = '\0'; // Null-terminate the buffer
-							std::cout << buffer;
-							bytes_read = read(current.fd, buffer, sizeof(buffer) - 1);
-						}
-						std::cout << std::endl;
-						if (!bytes_read)
-						{
-							std::cout << "Client Disconnected" << std::endl;
-							close(current.fd);
-							return 0; // hey so um don't do this when we have multiple clients for obvious reasons???
-							//my brother in christ, the keyword you want is "continue;"
-						}
-						if (bytes_read < 0)
-						{
-							perror("read");
-							close(current.fd);
-							// close(server_fd);
-							return 1;//don't return here either, handle the error here and "continue;" only return if we are truly fucked
-						}
->>>>>>> 0947fd88d0c3d7e82706d6f5a2da6fd0d04227f8
-					}
 				}
 				if (current.revents & POLLOUT)
 					std::cout << "- POLLOUT" << std::endl;
 				if (current.revents & POLLNVAL)
 					std::cout << "- POLLNVAL" << std::endl;
-				current.revents = 0;
+				if (current.revents & POLLHUP)
+					std::cout << "- POLLHUP" << std::endl;
+				current.revents = 0; // do we need to do this?
 				pollret--;
 				std::cout << "--------------------------------------------------------------------" << std::endl;
 			}
@@ -207,7 +169,7 @@ int main (int argc, char** argv)
 		return (1);//good that no malloc was done yet
 	}
 	name_this.fd = listener;
-	name_this.events = POLLIN;
+	name_this.events = POLLIN | POLLHUP;
 	name_this.revents = 0;//0 since this will get filled when poll() gets called
 	monitored.push_back(name_this);
 	/*
