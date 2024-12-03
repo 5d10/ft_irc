@@ -40,6 +40,7 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 	int pollret;
 	int monit_size;
 	(void)password;
+	std::string msgs[250]; // we don't have a user class / struct yet so the message buffer is here
 	while (1)
 	{
 		monit_size = monitored.size();
@@ -101,35 +102,38 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 				}
 				else if (current.revents & current.events)
 				{
-					std::cout << "- POLLIN" << std::endl;
-
-					// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
-					std::string msg = "";
-					char buffer[1];
-					ssize_t bytes_read = read(current.fd, buffer, sizeof(buffer));
-					while (bytes_read > 0 && buffer[bytes_read - 1] != '\n')
+					if (current.revents & POLLIN) // might be redundant later on
 					{
-						for (size_t j = 0; j < sizeof(buffer); j++)
-							msg += buffer[j];
-						std::cout  << "msg: " << msg << std::endl;
-						bytes_read = read(current.fd, buffer, sizeof(buffer)); // this can block? (nc -C + Ctrl-D) // is client socket non-blocking?
+						std::cout << "- POLLIN" << std::endl;
+						char buffer[1];
+						ssize_t bytes_read = recv(current.fd, buffer, sizeof(buffer), MSG_DONTWAIT);
+						while (bytes_read > 0 && buffer[bytes_read - 1] != '\n')
+						{
+							for (size_t j = 0; j < sizeof(buffer); j++)
+								msgs[i] += buffer[j];
+							// std::cout  << "msg: " << msg << std::endl;
+							bytes_read = recv(current.fd, buffer, sizeof(buffer), MSG_DONTWAIT); // this can block? (nc -C + Ctrl-D) // is client socket non-blocking?
+						}
+						if (!bytes_read)//consider checking for POLLHUP instead // https://stackoverflow.com/questions/74627334/no-pollhup-event-when-poll-on-tcp-socket-and-remote-closed
+						{
+							std::cout << "Client Disconnected" << std::endl;//debug?
+							close(current.fd);
+							monitored.erase(monitored.begin() + i);
+						}
+						else if (bytes_read < 0 && errno != EWOULDBLOCK) // can we use errno?
+						{
+							perror("read"); // perror
+							close(current.fd);
+							monitored.erase(monitored.begin() + i);
+							// close(server_fd);
+							return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
+						}
+						else if (bytes_read > 0)
+						{
+							std::cout << "Received message: " << msgs[i] << std::endl;
+							msgs[i] = "";
+						}
 					}
-					if (!bytes_read)//consider checking for POLLHUP instead // https://stackoverflow.com/questions/74627334/no-pollhup-event-when-poll-on-tcp-socket-and-remote-closed
-					{
-						std::cout << "Client Disconnected" << std::endl;//debug?
-						close(current.fd);
-						monitored.erase(monitored.begin() + i);
-					}
-					else if (bytes_read < 0)
-					{
-						perror("read");
-						close(current.fd);
-						monitored.erase(monitored.begin() + i);
-						// close(server_fd);
-						return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
-					}
-					else
-						std::cout << "Received message: " << msg << std::endl;
 				}
 				if (current.revents & POLLOUT)
 					std::cout << "- POLLOUT" << std::endl;
