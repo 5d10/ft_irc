@@ -40,7 +40,8 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 	int pollret;
 	int monit_size;
 	(void)password;
-	std::string msgs[250]; // we don't have a user class / struct yet so the message buffer is here
+	std::string rd_buff[250]; // we don't have a user class / struct yet so the message buffer is here
+	std::string wr_buff[250]; // we don't have a user class / struct yet so the message buffer is here
 	while (1)
 	{
 		monit_size = monitored.size();
@@ -94,7 +95,7 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 				    while (client_fd < 0)//this should not be needed
 						client_fd = accept(monitored[0].fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_addr_len); // returns -1 on failure, usually EAGAIN due to non-block//if properly programmed, we never get to see EAGAIN
 					newcomer.fd = client_fd;
-					newcomer.events = POLLIN | POLLHUP /*we might want some global precompiler thing for these, in case its not just POLLIN walways*/;
+					newcomer.events = POLLIN | POLLOUT | POLLHUP /*we might want some global precompiler thing for these, in case its not just POLLIN walways*/;
 					newcomer.revents = 0;
 					monitored.push_back(newcomer);
 					//do we want to do anything else with the newcomer? like putting there recent messages or something
@@ -110,7 +111,7 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 						while (bytes_read > 0 && buffer[bytes_read - 1] != '\n')
 						{
 							for (size_t j = 0; j < sizeof(buffer); j++)
-								msgs[i] += buffer[j];
+								rd_buff[i] += buffer[j];
 							// std::cout  << "msg: " << msg << std::endl;
 							bytes_read = recv(current.fd, buffer, sizeof(buffer), MSG_DONTWAIT); // this can block? (nc -C + Ctrl-D) // is client socket non-blocking?
 						}
@@ -118,20 +119,48 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 						{
 							std::cout << "Client Disconnected" << std::endl;//debug?
 							close(current.fd);
-							monitored.erase(monitored.begin() + i);
+							monitored.erase(monitored.begin() + i); // should we i-- after this? might be skipping over a client
 						}
-						else if (bytes_read < 0 && errno != EWOULDBLOCK) // can we use errno?
+						else if (bytes_read < 0 && errno != EAGAIN && errno != EWOULDBLOCK) // can we use errno?
 						{
 							perror("read"); // perror
 							close(current.fd);
-							monitored.erase(monitored.begin() + i);
+							monitored.erase(monitored.begin() + i); // should we i-- after this? might be skipping over a client
 							// close(server_fd);
 							return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
 						}
 						else if (bytes_read > 0)
 						{
-							std::cout << "Received message: " << msgs[i] << std::endl;
-							msgs[i] = "";
+							std::cout << "Received message: " << rd_buff[i] << std::endl;
+							for (int j = 0; j < 250; j++)
+								if (j != i)
+									wr_buff[j] = "Message From Client: " + rd_buff[i] + '\n';
+							rd_buff[i] = "";
+						}
+					}
+					// Write (cutrisimo y asqueroso)
+					if (current.events & POLLOUT && wr_buff[i].length() > 0)
+					{
+						char buffer[1];
+						buffer[0] = wr_buff[i].c_str()[0];
+						ssize_t out = send(current.fd, buffer, sizeof(buffer), MSG_DONTWAIT);
+						while (out > 0 && wr_buff[i].length() > 0)
+						{
+							if (wr_buff[i].length() > 1)
+							{
+								wr_buff[i] = wr_buff[i].substr(1);
+								buffer[0] = wr_buff[i].c_str()[0];
+								send(current.fd, buffer, sizeof(buffer), MSG_DONTWAIT);
+							}
+							else { wr_buff[i] = ""; }
+						}
+						if (out < 0 && errno != EAGAIN && errno != EWOULDBLOCK) // can we use errno?
+						{
+							perror("send"); // perror
+							close(current.fd);
+							monitored.erase(monitored.begin() + i); // should we i-- after this? might be skipping over a client
+							// close(server_fd);
+							return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
 						}
 					}
 				}
