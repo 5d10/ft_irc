@@ -51,9 +51,14 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 			for	(int i = 0; i < monit_size && pollret; i++) // we're potentially adding / removing clients from the vector, careful about the index and where it ends
 			{
 				struct pollfd current = monitored[i];
-				std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;//debug
+				if (DEBUG)
+					std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;//DEBUG
 				if (!(current.revents & current.events)) { continue; }
-				std::cout << "--------------------------------------------------------------------" << std::endl;
+				if (DEBUG)
+				{
+					std::cout << "--------------------------------------------------------------------" << std::endl;
+					std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
+				}
 				// std::cout << "POLLIN: " << POLLIN << std::endl; // 1
 				// std::cout << "POLLRDNORM: " << POLLRDNORM << std::endl; // 64
 				// std::cout << "POLLRDBAND: " << POLLRDBAND << std::endl; // 128
@@ -65,9 +70,8 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 				// std::cout << "POLLHUP: " << POLLHUP << std::endl; // 16
 				// std::cout << "POLLRDHUP: " << POLLRDHUP << std::endl; // 8192
 				// std::cout << "POLLNVAL: " << POLLNVAL << std::endl; // 32
-				std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
 				// if (current.events)
-				// {//events are the ones we will be checking with, so we are the ones setting the values. Do we need to debug print them?
+				// {//events are the ones we will be checking with, so we are the ones setting the values. Do we need to DEBUG print them?
 				// 	std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
 				// 	if (current.events & POLLIN)
 				// 		std::cout << "- POLLIN" << std::endl;
@@ -81,10 +85,12 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 				// std::cout << std::endl;
 				if (!current.revents)
 				{
-					std::cout << "No Revents"<< std::endl;//debug
+					if (DEBUG)
+						std::cout << "No Revents"<< std::endl;//DEBUG
 					continue;
 				}
-				std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
+				if (DEBUG)
+					std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
 				if (i == 0 && (current.revents & current.events)) //listener will always be [0]
 				{
 					// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
@@ -99,13 +105,14 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 					newcomer.revents = 0;
 					monitored.push_back(newcomer);
 					//do we want to do anything else with the newcomer? like putting there recent messages or something
-					std::cout << "WORLD WIDE NOISE 🗣 🗣 🗣" << std::endl;//debug
+					std::cout << "WORLD WIDE NOISE 🗣 🗣 🗣" << std::endl;//DEBUG
 				}
 				else if (current.revents & current.events)
 				{
 					if (current.revents & POLLIN) // might be redundant later on
 					{
-						std::cout << "- POLLIN" << std::endl;
+						if (DEBUG)
+							std::cout << "- POLLIN" << std::endl;
 						char buffer[1];
 						ssize_t bytes_read = recv(current.fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 						while (bytes_read > 0 && buffer[bytes_read - 1] != '\n')
@@ -117,7 +124,7 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 						}
 						if (!bytes_read)//consider checking for POLLHUP instead // https://stackoverflow.com/questions/74627334/no-pollhup-event-when-poll-on-tcp-socket-and-remote-closed
 						{
-							std::cout << "Client Disconnected" << std::endl;//debug?
+							std::cout << "Client Disconnected" << std::endl;//DEBUG?
 							close(current.fd);
 							monitored.erase(monitored.begin() + i); // should we i-- after this? might be skipping over a client
 						}
@@ -164,15 +171,19 @@ int cycle(std::vector<struct pollfd>& monitored, const char *const password)
 						}
 					}
 				}
-				if (current.revents & POLLOUT)
-					std::cout << "- POLLOUT" << std::endl;
-				if (current.revents & POLLNVAL)
-					std::cout << "- POLLNVAL" << std::endl;
-				if (current.revents & POLLHUP)
-					std::cout << "- POLLHUP" << std::endl;
+				if (DEBUG)
+				{
+					if (current.revents & POLLOUT)
+						std::cout << "- POLLOUT" << std::endl;
+					if (current.revents & POLLNVAL)
+						std::cout << "- POLLNVAL" << std::endl;
+					if (current.revents & POLLHUP)
+						std::cout << "- POLLHUP" << std::endl;
+				}
 				current.revents = 0; // do we need to do this?
 				pollret--;
-				std::cout << "--------------------------------------------------------------------" << std::endl;
+				if (DEBUG)
+					std::cout << "--------------------------------------------------------------------" << std::endl;
 			}
 		}
 		else if (pollret)
