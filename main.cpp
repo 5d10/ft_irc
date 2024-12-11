@@ -97,11 +97,11 @@ int Server::OnClientRead(size_t index)
 	}
 	else if (bytes_read > 0)
 	{
-		std::cout << "Received message: " << client.rd_buff << std::endl;
+		std::cout << "Received message: " << client.GetReadBuffer() << std::endl;
 		for (size_t i = 0; i < clients.size(); i++)
 			if (i != index)
-				clients[i].wr_buff += "Message From Client: " + client.rd_buff + '\n';
-		client.rd_buff = "";
+				clients[i].AddToWriteBuffer("Message From Client: " + client.GetReadBuffer() + '\n');
+		client.ClearReadBuffer();
 	}
 	return 0;
 }
@@ -221,7 +221,7 @@ int Server::cycle()
 							return out;
 					}
 					// Write (cutrisimo y asqueroso)
-					if (current.events & POLLOUT && client.wr_buff.length() > 0)
+					if (current.events & POLLOUT && client.GetWriteBuffer().length() > 0)
 					{
 						int out = OnClientSend(i);
 						if (out)
@@ -259,8 +259,9 @@ int main (int argc, char** argv)
 		std::cout << "Incorrect amount of arguments. Expected 2, have " << argc - 1 << std::endl << "Usage: ./ircserv <port> <password>" << std::endl;
 		return (1);
 	}
+	int port = std::atoi(argv[1]);
 	Server server(argv[2]);
-	if (server.init(std::atoi(argv[1]))) { return 1; }
+	if (server.init(port)) { return 1; }
 	/*
 	monitored = static_cast<struct pollfd*>(malloc(2 * sizeof(struct pollfd))); // erm... what the malloc? (-42 social credit) (can / should we use a vector?) // not even a calloc? damn dude ok // why do we have 2 sockets??
 	if (!monitored)
@@ -269,7 +270,7 @@ int main (int argc, char** argv)
 		return (ENOMEM);
 	}
 	*/
-	std::cout << "Socket ready! Listening on port " << std::atoi(argv[1]) << "..." << std::endl;
+	std::cout << "Server ready! Listening on port " << port << "..." << std::endl;
 
 	server.cycle();
 	return (0);
