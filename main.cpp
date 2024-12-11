@@ -58,7 +58,7 @@ void Server::AddClient(int fd, short flags)
 	clients.push_back(Client(fd));
 }
 
-void Server::RemoveClient(size_t index)
+void Server::DisconnectClient(size_t index)
 {
 	close(pollfds[index].fd);
 	pollfds.erase(pollfds.begin() + index);
@@ -85,13 +85,13 @@ int Server::OnClientRead(size_t index)
 	if (!bytes_read)//consider checking for POLLHUP instead // https://stackoverflow.com/questions/74627334/no-pollhup-event-when-poll-on-tcp-socket-and-remote-closed
 	{
 		std::cout << "Client Disconnected" << std::endl;//DEBUG?
-		RemoveClient(index); // should we i-- after this? might be skipping over a client
+		DisconnectClient(index); // should we i-- after this? might be skipping over a client
 	}
 	else if (bytes_read < 0 && errno != EAGAIN && errno != EWOULDBLOCK) // can we use errno?
 	{
 		std::cerr << "error when reading from [" << index << "]" << std::endl; // std::cerr
 		perror("read" ); // perror
-		RemoveClient(index); // should we i-- after this? might be skipping over a client
+		DisconnectClient(index); // should we i-- after this? might be skipping over a client
 		// close(server_fd);
 		return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
 	}
@@ -114,7 +114,7 @@ int Server::OnClientSend(size_t index)
 	{
 		std::cerr << "error when sending from [" << index << "]" << std::endl; // std::cerr
 		perror("send"); // perror
-		RemoveClient(index); // should we i-- after this? might be skipping over a client
+		DisconnectClient(index); // should we i-- after this? might be skipping over a client
 		// close(server_fd);
 		return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
 	}
