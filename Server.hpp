@@ -13,7 +13,7 @@
 
 # define MAX_CONN_QUEUE 128
 
-# define DEBUG 0
+# define DEBUG 1
 
 class Server
 {
@@ -23,6 +23,7 @@ class Server
         std::vector<Client> clients;
 
         int initialize_listener(const int port);
+
     public:
         Server(const char *const password) : password(password) { }
         int init(int port);

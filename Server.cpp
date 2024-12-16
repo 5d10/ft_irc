@@ -1,18 +1,29 @@
 #include "Server.hpp"
 #include <cstdio> // std::perror (no lo meto en el header porque no se si puede usarse o no el perror)
 
+int Server::init(int port)
+{
+	int listener;
+	listener = initialize_listener(port); // potencial error de parsing con los out-of-range y/o cosas que no sean numeros mi rey
+	if (-1 == listener)
+		//possibly use my pterror from minishell _glopez-m
+		return (-1);
+	AddClient(listener, POLLIN | POLLHUP); //I think POLLHUP is doing nothing here
+	return (0);
+}
+
 int Server::initialize_listener(const int port)
 {
 	int listener;
 	struct protoent* protocol = getprotobyname("TCP");
 	struct sockaddr_in test;//where in the std is this defined? don't ask me
 
-	if (!protocol)
-	{
+	if (!protocol) {
 		std::cerr << "Bad ini of protocol" << std::endl;//cerr used
-		return (-1);
-	}
-	listener = socket(AF_INET /* IPv4 */, SOCK_STREAM | SOCK_NONBLOCK /* TCP and Non-Blocking */, protocol->p_proto /* TCP Protocolgit stat */);
+		return (-1); }
+	listener = socket(AF_INET /* IPv4 */,
+				SOCK_STREAM | SOCK_NONBLOCK /* TCP and Non-Blocking */,
+				protocol->p_proto /* TCP Protocolgit stat */);
 	if (-1 == listener)
 		return (-1);
 
@@ -31,19 +42,6 @@ int Server::initialize_listener(const int port)
 	if (-1 == listen(listener, MAX_CONN_QUEUE))
 		return (-1);
 	return (listener);	
-}
-
-int Server::init(int port)
-{
-	int listener;
-	listener = initialize_listener(port); // potencial error de parsing con los out-of-range y/o cosas que no sean numeros mi rey
-	if (-1 == listener)
-	{
-		//possibly use my pterror from minishell _glopez-m
-		return (1);//good that no malloc was done yet
-	}
-	AddClient(listener, POLLIN | POLLHUP);
-	return 0;
 }
 
 void Server::AddClient(int fd, short flags)
@@ -71,7 +69,7 @@ void Server::AcceptClient()
 	int client_fd = -1;
 	while (client_fd < 0)//this should not be needed
 		client_fd = accept(pollfds[0].fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_addr_len); // returns -1 on failure, usually EAGAIN due to non-block//if properly programmed, we never get to see EAGAIN
-	AddClient(client_fd, POLLIN | POLLOUT | POLLHUP); // we might want some global precompiler thing for these, in case its not just POLLIN walways
+	AddClient(client_fd, POLLIN | POLLHUP); // we might want some global precompiler thing for these, in case its not just POLLIN walways
 	//do we want to do anything else with the newcomer? like putting there recent messages or something
 	std::cout << "WORLD WIDE NOISE 🗣 🗣 🗣" << std::endl;//DEBUG
 }
@@ -91,17 +89,22 @@ int Server::OnClientRead(size_t index)
 		perror("read" ); // perror
 		DisconnectClient(index); // should we i-- after this? might be skipping over a client
 		// close(server_fd);
-		return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
+		return (1);
 	}
 	else if (bytes_read > 0)
 	{
 		std::cout << "Received message: " << client.GetReadBuffer() << std::endl;
 		for (size_t i = 0; i < clients.size(); i++)
+		{
 			if (i != index)
+			{
 				clients[i].AddToWriteBuffer("Message From Client: " + client.GetReadBuffer() + '\n');
+				pollfds[i].events |= POLLOUT;
+			}
+		}
 		client.ClearReadBuffer();
 	}
-	return 0;
+	return (0);
 }
 
 int Server::OnClientSend(size_t index)
@@ -114,9 +117,10 @@ int Server::OnClientSend(size_t index)
 		perror("send"); // perror
 		DisconnectClient(index); // should we i-- after this? might be skipping over a client
 		// close(server_fd);
-		return 1;//don't return, try to handle the error here and "continue;" only return if we are truly fucked
+		return (1);
 	}
-	return 0;
+	pollfds[index].events &= (~POLLOUT); 
+	return (0);
 }
 
 int Server::cycle()
@@ -124,6 +128,7 @@ int Server::cycle()
 	int pollret;
 	size_t monit_size;
 	(void)password;
+
 	while (1)
 	{
 		monit_size = pollfds.size();
@@ -134,14 +139,18 @@ int Server::cycle()
 			{
 				struct pollfd current = pollfds[i];
 				Client &client = clients[i];
-				if (DEBUG)
-					std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;//DEBUG
-				if (!(current.revents & current.events)) { continue; }
-				if (DEBUG)
-				{
+
+				#if DEBUG
+					std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;
+				#endif
+
+				if (!(current.revents & current.events)) continue;
+				//I'd say this is unnecessary given we will go through the if else if tree
+
+				#if DEBUG
 					std::cout << "--------------------------------------------------------------------" << std::endl;
 					std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
-				}
+				#endif
 				// std::cout << "POLLIN: " << POLLIN << std::endl; // 1
 				// std::cout << "POLLRDNORM: " << POLLRDNORM << std::endl; // 64
 				// std::cout << "POLLRDBAND: " << POLLRDBAND << std::endl; // 128
@@ -166,22 +175,25 @@ int Server::cycle()
 				// else
 				// 	std::cout << "No Events"<< std::endl;
 				// std::cout << std::endl;
-				if (!current.revents)
+				if (!current.revents)//will we actually ever enter here?
 				{
-					if (DEBUG)
-						std::cout << "No Revents"<< std::endl;//DEBUG
+					#if DEBUG
+						std::cout << "No Revents"<< std::endl;
+					#endif
 					continue;
 				}
-				if (DEBUG)
+				#if DEBUG
 					std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
+				#endif
 				if (i == 0 && (current.revents & current.events)) //listener will always be [0]
 					AcceptClient();
 				else if (current.revents & current.events)
 				{
 					if (current.revents & POLLIN) // might be redundant later on
 					{
-						if (DEBUG)
+						#if DEBUG
 							std::cout << "- POLLIN" << std::endl;
+						#endif
 						int out = OnClientRead(i);
 						if (out)
 							return out;
@@ -194,19 +206,19 @@ int Server::cycle()
 							return out;
 					}
 				}
-				if (DEBUG)
-				{
+				#if DEBUG
 					if (current.revents & POLLOUT)
 						std::cout << "- POLLOUT" << std::endl;
 					if (current.revents & POLLNVAL)
 						std::cout << "- POLLNVAL" << std::endl;
 					if (current.revents & POLLHUP)
 						std::cout << "- POLLHUP" << std::endl;
-				}
-				current.revents = 0; // do we need to do this?
+				#endif
+				current.revents = 0; // do we need to do this? //we need to reset it, right?
 				pollret--;
-				if (DEBUG)
+				#if DEBUG
 					std::cout << "--------------------------------------------------------------------" << std::endl;
+				#endif
 			}
 		}
 		else if (pollret)

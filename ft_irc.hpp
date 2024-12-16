@@ -10,7 +10,4 @@
 # include <vector>
 # include "Server.hpp"
 
-
-# define DEBUG 0
-
 #endif
