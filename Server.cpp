@@ -74,6 +74,27 @@ void Server::AcceptClient()
 	std::cout << "WORLD WIDE NOISE 🗣 🗣 🗣" << std::endl;//DEBUG
 }
 
+bool debug_is_printable_str(std::string str)
+{
+	for (unsigned int i = 0; i < str.size(); i++)
+		if (!isprint(str[i]) && !isspace(str[i]))
+			return false;
+	return true;
+}
+
+void debug_print_hex(std::string str)
+{
+	std::string hexChars = "0123456789ABCDEF";
+	for (unsigned int i = 0; i < str.size(); i++)
+	{
+		unsigned char c = str[i];
+		std::cout << hexChars[c / 16];
+		std::cout << hexChars[c % 16];
+		if (i < str.size() - 1)
+			std::cout << " ";
+	}
+}
+
 int Server::OnClientRead(size_t index)
 {
 	Client &client = clients[index];
@@ -93,12 +114,25 @@ int Server::OnClientRead(size_t index)
 	}
 	else if (bytes_read > 0)
 	{
-		std::cout << "Received message: " << client.GetReadBuffer() << std::endl;
+		if (debug_is_printable_str(client.GetReadBuffer()))
+			std::cout << "Received message: " << client.GetReadBuffer() << std::endl;
+		else
+		{
+			std::cout << "Received bytes: ";
+			debug_print_hex(client.GetReadBuffer());
+			std::cout << std::endl;
+		}
 		for (size_t i = 0; i < clients.size(); i++)
 		{
 			if (i != index)
 			{
 				clients[i].AddToWriteBuffer("Message From Client: " + client.GetReadBuffer() + '\n');
+				pollfds[i].events |= POLLOUT;
+			}
+			else if (client.GetReadBuffer() == "JOIN #chan1\r")
+			{
+				// clients[i].AddToWriteBuffer("474 ::= #chan1 :Cannot join channel (+b)\r\n");
+				clients[i].AddToWriteBuffer("474 #chan1 :Cannot join channel (+b)\r\n");
 				pollfds[i].events |= POLLOUT;
 			}
 		}
