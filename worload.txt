@@ -1,0 +1,28 @@
+TO DO
+	Parser
+	Formater
+	Channels
+
+DONE
+	polling
+	writing*
+
+
+std::string command;
+std::map<std::string, unsigned int> mapper;
+
+//possibly
+std::map<std::string, __ *(f)(__,__)> mapper;
+
+//first implement this, we might do the other map if we feel like so
+switch(mapper.at(command))
+{
+	case 1:
+		f(--,--);
+		break;
+	case 2:
+	case 3:
+	.
+	.
+	.
+}
