@@ -95,6 +95,19 @@ void debug_print_hex(std::string str)
 	}
 }
 
+// move this elsewhere please???
+bool IsValidChannelName(const std::string &name)
+{
+	if (name.size() > 200)
+		return false;
+	if (name[0] != '#' || name[0] != '&')
+		return false;
+	for (unsigned int i = 1; i < name.size(); i++)
+		if (name[i] == ' ' || name[i] == ',' || name[i] == 7)
+			return false;
+	return true;
+}
+
 int Server::OnClientRead(size_t index)
 {
 	Client &client = clients[index];
@@ -131,8 +144,19 @@ int Server::OnClientRead(size_t index)
 			}
 			else if (client.GetReadBuffer() == "JOIN #chan1\r")
 			{
-				// clients[i].AddToWriteBuffer("474 ::= #chan1 :Cannot join channel (+b)\r\n");
-				clients[i].AddToWriteBuffer("474 #chan1 :Cannot join channel (+b)\r\n");
+				if (false)
+				{
+					clients[i].AddToWriteBuffer(":<nickname>!<username>@localhost JOIN :#chan1\r\n");
+					clients[i].AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
+					clients[i].AddToWriteBuffer(":localhost 353 <client> <symbol> #chan1 :<list_of_nicks>,pfontenl_1\r\n");
+				}
+				else
+				{
+					clients[i].AddToWriteBuffer(":localhost 474 <client> #chan1 :Cannot join channel (+b)\r\n");
+					// clients[i].AddToWriteBuffer(":localhost 475 <client> #chan1 :Cannot join channel (+k)\r\n");
+					// clients[i].AddToWriteBuffer(":localhost 474 <client> #chan1\r\n");
+					// clients[i].AddToWriteBuffer(":localhost 475 #chan1 :gkasgashjg\r\n");
+				}
 				pollfds[i].events |= POLLOUT;
 			}
 		}
