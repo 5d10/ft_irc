@@ -144,11 +144,12 @@ int Server::OnClientRead(size_t index)
 			}
 			else if (client.GetReadBuffer() == "JOIN #chan1\r")
 			{
-				if (false)
+				if (true)
 				{
-					clients[i].AddToWriteBuffer(":<nickname>!<username>@localhost JOIN :#chan1\r\n");
+					clients[i].AddToWriteBuffer(":nick1!user@localhost JOIN :#chan1\r\n");
 					clients[i].AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
-					clients[i].AddToWriteBuffer(":localhost 353 <client> <symbol> #chan1 :<list_of_nicks>,pfontenl_1\r\n");
+					clients[i].AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
+					clients[i].AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
 				}
 				else
 				{
@@ -157,6 +158,21 @@ int Server::OnClientRead(size_t index)
 					// clients[i].AddToWriteBuffer(":localhost 474 <client> #chan1\r\n");
 					// clients[i].AddToWriteBuffer(":localhost 475 #chan1 :gkasgashjg\r\n");
 				}
+				pollfds[i].events |= POLLOUT;
+			}
+			else if (client.GetReadBuffer() == "USER user 0 * :realname\r")
+			{
+				// Copied Over From Another ft_irc
+				clients[i].AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
+				// clients[i].AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
+				// clients[i].AddToWriteBuffer(":localhost 002 nick1 :Your host is 42_Ftirc (localhost), running version 1.1\r\n");
+				// clients[i].AddToWriteBuffer(":localhost 003 nick1 :This server was created 15-01-2025 11:44:24\r\n");
+				// clients[i].AddToWriteBuffer(":localhost 004 nick1 localhost 1.1 io kost k\r\n");
+				// clients[i].AddToWriteBuffer(":localhost 005 nick1 CHANNELLEN=32 NICKLEN=9 TOPICLEN=307 :are supported by this server\r\n");
+				
+				// Trigger For "Connection Complete!" Pop-Up On HexChat
+				clients[i].AddToWriteBuffer(":localhost 376 nick1 :End of /MOTD command.\r\n");
+				
 				pollfds[i].events |= POLLOUT;
 			}
 		}
@@ -181,109 +197,114 @@ int Server::OnClientSend(size_t index)
 	return (0);
 }
 
+extern bool signal_shutdown;
+
 int Server::cycle()
 {
+	std::cout << "Cycling..." << std::endl;
+
 	int pollret;
 	size_t monit_size;
 	(void)password;
-
-	while (1)
+	while (!signal_shutdown)
 	{
 		monit_size = pollfds.size();
 		pollret = poll(pollfds.data(), monit_size, 0 /*Timeout in ms, set to 0 so it's non-blocking ("If timeout is zero, then poll() will return without blocking.", Source: https://man.freebsd.org/cgi/man.cgi?poll)*/);
-		if (pollret > 0)
+		if (pollret < 0 && errno != EINTR)
 		{
-			for	(size_t i = 0; i < monit_size && pollret; i++) // we're potentially adding / removing clients from the vector, careful about the index and where it ends
-			{
-				struct pollfd current = pollfds[i];
-				Client &client = clients[i];
-
-				#if DEBUG
-					std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;
-				#endif
-
-				if (!(current.revents & current.events)) continue;
-				//I'd say this is unnecessary given we will go through the if else if tree
-
-				#if DEBUG
-					std::cout << "--------------------------------------------------------------------" << std::endl;
-					std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
-				#endif
-				// std::cout << "POLLIN: " << POLLIN << std::endl; // 1
-				// std::cout << "POLLRDNORM: " << POLLRDNORM << std::endl; // 64
-				// std::cout << "POLLRDBAND: " << POLLRDBAND << std::endl; // 128
-				// std::cout << "POLLPRI: " << POLLPRI << std::endl; // 2
-				// std::cout << "POLLOUT: " << POLLOUT << std::endl; // 4
-				// std::cout << "POLLWRNORM: " << POLLWRNORM << std::endl; // 256
-				// std::cout << "POLLWRBAND: " << POLLWRBAND << std::endl; // 512
-				// std::cout << "POLLERR: " << POLLERR << std::endl; // 8
-				// std::cout << "POLLHUP: " << POLLHUP << std::endl; // 16
-				// std::cout << "POLLRDHUP: " << POLLRDHUP << std::endl; // 8192
-				// std::cout << "POLLNVAL: " << POLLNVAL << std::endl; // 32
-				// if (current.events)
-				// {//events are the ones we will be checking with, so we are the ones setting the values. Do we need to DEBUG print them?
-				// 	std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
-				// 	if (current.events & POLLIN)
-				// 		std::cout << "- POLLIN" << std::endl;
-				// 	if (current.events & POLLOUT)
-				// 		std::cout << "- POLLOUT" << std::endl;
-				// 	if (current.events & POLLNVAL)
-				// 		std::cout << "- POLLNVAL" << std::endl;
-				// }
-				// else
-				// 	std::cout << "No Events"<< std::endl;
-				// std::cout << std::endl;
-				if (!current.revents)//will we actually ever enter here?
-				{
-					#if DEBUG
-						std::cout << "No Revents"<< std::endl;
-					#endif
-					continue;
-				}
-				#if DEBUG
-					std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
-				#endif
-				if (i == 0 && (current.revents & current.events)) //listener will always be [0]
-					AcceptClient();
-				else if (current.revents & current.events)
-				{
-					if (current.revents & POLLIN) // might be redundant later on
-					{
-						#if DEBUG
-							std::cout << "- POLLIN" << std::endl;
-						#endif
-						int out = OnClientRead(i);
-						if (out)
-							return out;
-					}
-					// Write (cutrisimo y asqueroso)
-					if (current.events & POLLOUT && client.GetWriteBuffer().length() > 0)
-					{
-						int out = OnClientSend(i);
-						if (out)
-							return out;
-					}
-				}
-				#if DEBUG
-					if (current.revents & POLLOUT)
-						std::cout << "- POLLOUT" << std::endl;
-					if (current.revents & POLLNVAL)
-						std::cout << "- POLLNVAL" << std::endl;
-					if (current.revents & POLLHUP)
-						std::cout << "- POLLHUP" << std::endl;
-				#endif
-				current.revents = 0; // do we need to do this? //we need to reset it, right?
-				pollret--;
-				#if DEBUG
-					std::cout << "--------------------------------------------------------------------" << std::endl;
-				#endif
-			}
-		}
-		else if (pollret)
-		{
-			std::cerr << "Errno: " << errno << std::endl; // cerr used
+			std::cerr << "Poll Errno: " << errno << std::endl; // cerr used
 			return (-1);
 		}
+		for	(size_t i = 0; i < monit_size && pollret > 0; i++) // we're potentially adding / removing clients from the vector, careful about the index and where it ends
+		{
+			struct pollfd current = pollfds[i];
+			Client &client = clients[i];
+
+			#if DEBUG
+				std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;
+			#endif
+
+			if (!(current.revents & current.events)) continue;
+			//I'd say this is unnecessary given we will go through the if else if tree
+
+			#if DEBUG
+				std::cout << "--------------------------------------------------------------------" << std::endl;
+				std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
+			#endif
+			// std::cout << "POLLIN: " << POLLIN << std::endl; // 1
+			// std::cout << "POLLRDNORM: " << POLLRDNORM << std::endl; // 64
+			// std::cout << "POLLRDBAND: " << POLLRDBAND << std::endl; // 128
+			// std::cout << "POLLPRI: " << POLLPRI << std::endl; // 2
+			// std::cout << "POLLOUT: " << POLLOUT << std::endl; // 4
+			// std::cout << "POLLWRNORM: " << POLLWRNORM << std::endl; // 256
+			// std::cout << "POLLWRBAND: " << POLLWRBAND << std::endl; // 512
+			// std::cout << "POLLERR: " << POLLERR << std::endl; // 8
+			// std::cout << "POLLHUP: " << POLLHUP << std::endl; // 16
+			// std::cout << "POLLRDHUP: " << POLLRDHUP << std::endl; // 8192
+			// std::cout << "POLLNVAL: " << POLLNVAL << std::endl; // 32
+			// if (current.events)
+			// {//events are the ones we will be checking with, so we are the ones setting the values. Do we need to DEBUG print them?
+			// 	std::cout << "[EVENTS] (Raw Value: " << current.events << ")" << std::endl;
+			// 	if (current.events & POLLIN)
+			// 		std::cout << "- POLLIN" << std::endl;
+			// 	if (current.events & POLLOUT)
+			// 		std::cout << "- POLLOUT" << std::endl;
+			// 	if (current.events & POLLNVAL)
+			// 		std::cout << "- POLLNVAL" << std::endl;
+			// }
+			// else
+			// 	std::cout << "No Events"<< std::endl;
+			// std::cout << std::endl;
+			if (!current.revents)//will we actually ever enter here?
+			{
+				#if DEBUG
+					std::cout << "No Revents"<< std::endl;
+				#endif
+				continue;
+			}
+			#if DEBUG
+				std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
+			#endif
+			if (i == 0 && (current.revents & current.events)) //listener will always be [0]
+				AcceptClient();
+			else if (current.revents & current.events)
+			{
+				if (current.revents & POLLIN) // might be redundant later on
+				{
+					#if DEBUG
+						std::cout << "- POLLIN" << std::endl;
+					#endif
+					int out = OnClientRead(i);
+					if (out)
+						return out;
+				}
+				// Write (cutrisimo y asqueroso)
+				if (current.events & POLLOUT && client.GetWriteBuffer().length() > 0)
+				{
+					int out = OnClientSend(i);
+					if (out)
+						return out;
+				}
+			}
+			#if DEBUG
+				if (current.revents & POLLOUT)
+					std::cout << "- POLLOUT" << std::endl;
+				if (current.revents & POLLNVAL)
+					std::cout << "- POLLNVAL" << std::endl;
+				if (current.revents & POLLHUP)
+					std::cout << "- POLLHUP" << std::endl;
+				std::cout << "--------------------------------------------------------------------" << std::endl;
+			#endif
+			current.revents = 0; // do we need to do this? //we need to reset it, right?
+			pollret--;
+		}
+	}
+	std::cout << "Shutting down server..." << std::endl;
+	std::cout << pollfds.size() << std::endl;
+	for (ssize_t i = pollfds.size() - 1; i >= 0; i--)
+	{
+		std::cout << "Disconnecting FD " << pollfds[i].fd << std::endl;
+		DisconnectClient(i);
 	}
 	return (0);//in case we want to return errors
 }
