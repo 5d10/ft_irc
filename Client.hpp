@@ -1,9 +1,7 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
-# include <string>
-# include <stdlib.h>
-# include <netdb.h>
+#include "ft_irc.hpp"
 
 class Client
 {

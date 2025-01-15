@@ -27,11 +27,21 @@ int Server::initialize_listener(const int port)
 	if (-1 == listener)
 		return (-1);
 
-	bzero(&test, sizeof(struct sockaddr_in)); // are- are we allowed to use bzero and other funcs??? is there no cpp std98 equivalent?
+	std::memset(&test, 0, sizeof(struct sockaddr_in));
 	test.sin_family = AF_INET;
 	test.sin_addr.s_addr = htonl(2130706433);// presumably 127.0.0.1 whic iirc is localhost
 	test.sin_port = htons(port);//why htonl and htons? // https://linux.die.net/man/3/htonl "htonl, htons, ntohl, ntohs - convert values between host and network byte order" tl;dr: network shit
 	//strncpy(test.sin_path, path, sizeof(test.sin_path) -1);//please check for overflow
+
+	// Copied From Another ft_irc, Fixes Some "Failed To Bind" Issues
+	int flag = 1;
+	if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag)))
+	{
+		std::cerr << "Failed to configure server socket" << std::endl; // cerr used
+		return (-1);
+	}
+
+
 	if (-1 == bind(listener, reinterpret_cast<const struct sockaddr*>(&test), sizeof(test)))
 	{
 		std::cerr << "Failed to bind" << std::endl;//cerr used
@@ -58,7 +68,10 @@ void Server::DisconnectClient(size_t index)
 {
 	close(pollfds[index].fd);
 	pollfds.erase(pollfds.begin() + index);
-	clients.erase(clients.begin() + index);
+	std::list<Client>::iterator it = clients.begin();
+	while (index--)
+		it++;
+	clients.erase(it);
 }
 
 void Server::AcceptClient()
@@ -110,7 +123,7 @@ bool IsValidChannelName(const std::string &name)
 
 int Server::OnClientRead(size_t index)
 {
-	Client &client = clients[index];
+	Client &client = getClientAtIndex(index);
 	ssize_t bytes_read = client.Read();
 	if (!bytes_read)//consider checking for POLLHUP instead // https://stackoverflow.com/questions/74627334/no-pollhup-event-when-poll-on-tcp-socket-and-remote-closed
 	{
@@ -139,39 +152,39 @@ int Server::OnClientRead(size_t index)
 		{
 			if (i != index)
 			{
-				clients[i].AddToWriteBuffer("Message From Client: " + client.GetReadBuffer() + '\n');
+				getClientAtIndex(i).AddToWriteBuffer("Message From Client: " + client.GetReadBuffer() + '\n');
 				pollfds[i].events |= POLLOUT;
 			}
 			else if (client.GetReadBuffer() == "JOIN #chan1\r")
 			{
 				if (true)
 				{
-					clients[i].AddToWriteBuffer(":nick1!user@localhost JOIN :#chan1\r\n");
-					clients[i].AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
-					clients[i].AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
-					clients[i].AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
+					getClientAtIndex(i).AddToWriteBuffer(":nick1!user@localhost JOIN :#chan1\r\n");
+					getClientAtIndex(i).AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
+					getClientAtIndex(i).AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
+					getClientAtIndex(i).AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
 				}
 				else
 				{
-					clients[i].AddToWriteBuffer(":localhost 474 <client> #chan1 :Cannot join channel (+b)\r\n");
-					// clients[i].AddToWriteBuffer(":localhost 475 <client> #chan1 :Cannot join channel (+k)\r\n");
-					// clients[i].AddToWriteBuffer(":localhost 474 <client> #chan1\r\n");
-					// clients[i].AddToWriteBuffer(":localhost 475 #chan1 :gkasgashjg\r\n");
+					getClientAtIndex(i).AddToWriteBuffer(":localhost 474 <client> #chan1 :Cannot join channel (+b)\r\n");
+					// getClientAtIndex(i).AddToWriteBuffer(":localhost 475 <client> #chan1 :Cannot join channel (+k)\r\n");
+					// getClientAtIndex(i).AddToWriteBuffer(":localhost 474 <client> #chan1\r\n");
+					// getClientAtIndex(i).AddToWriteBuffer(":localhost 475 #chan1 :gkasgashjg\r\n");
 				}
 				pollfds[i].events |= POLLOUT;
 			}
 			else if (client.GetReadBuffer() == "USER user 0 * :realname\r")
 			{
 				// Copied Over From Another ft_irc
-				clients[i].AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
-				// clients[i].AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
-				// clients[i].AddToWriteBuffer(":localhost 002 nick1 :Your host is 42_Ftirc (localhost), running version 1.1\r\n");
-				// clients[i].AddToWriteBuffer(":localhost 003 nick1 :This server was created 15-01-2025 11:44:24\r\n");
-				// clients[i].AddToWriteBuffer(":localhost 004 nick1 localhost 1.1 io kost k\r\n");
-				// clients[i].AddToWriteBuffer(":localhost 005 nick1 CHANNELLEN=32 NICKLEN=9 TOPICLEN=307 :are supported by this server\r\n");
+				getClientAtIndex(i).AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
+				// getClientAtIndex(i).AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
+				// getClientAtIndex(i).AddToWriteBuffer(":localhost 002 nick1 :Your host is 42_Ftirc (localhost), running version 1.1\r\n");
+				// getClientAtIndex(i).AddToWriteBuffer(":localhost 003 nick1 :This server was created 15-01-2025 11:44:24\r\n");
+				// getClientAtIndex(i).AddToWriteBuffer(":localhost 004 nick1 localhost 1.1 io kost k\r\n");
+				// getClientAtIndex(i).AddToWriteBuffer(":localhost 005 nick1 CHANNELLEN=32 NICKLEN=9 TOPICLEN=307 :are supported by this server\r\n");
 				
 				// Trigger For "Connection Complete!" Pop-Up On HexChat
-				clients[i].AddToWriteBuffer(":localhost 376 nick1 :End of /MOTD command.\r\n");
+				getClientAtIndex(i).AddToWriteBuffer(":localhost 376 nick1 :End of /MOTD command.\r\n");
 				
 				pollfds[i].events |= POLLOUT;
 			}
@@ -183,7 +196,7 @@ int Server::OnClientRead(size_t index)
 
 int Server::OnClientSend(size_t index)
 {
-	Client &client = clients[index];
+	Client &client = getClientAtIndex(index);
 	ssize_t out = client.Send();
 	if (out < 0 && errno != EAGAIN && errno != EWOULDBLOCK) // can we use errno?
 	{
@@ -218,7 +231,7 @@ int Server::cycle()
 		for	(size_t i = 0; i < monit_size && pollret > 0; i++) // we're potentially adding / removing clients from the vector, careful about the index and where it ends
 		{
 			struct pollfd current = pollfds[i];
-			Client &client = clients[i];
+			Client &client = getClientAtIndex(i);
 
 			#if DEBUG
 				std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;
@@ -309,3 +322,10 @@ int Server::cycle()
 	return (0);//in case we want to return errors
 }
 
+Client &Server::getClientAtIndex(size_t index)
+{
+	std::list<Client>::iterator it = clients.begin();
+	while (index--)
+		it++;
+	return *it;
+}

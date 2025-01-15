@@ -1,6 +1,5 @@
 #include "ft_irc.hpp"
-
-#include <csignal>
+#include "Server.hpp"
 
 bool signal_shutdown = false;
 

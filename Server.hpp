@@ -1,15 +1,8 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-# include <vector>
-# include <iostream>
-# include <unistd.h>
-# include <sys/socket.h>
-# include <netdb.h>
-# include <poll.h>
-# include <strings.h>
-# include <errno.h>
-# include "Client.hpp"
+#include "ft_irc.hpp"
+#include "Client.hpp"
 
 # define MAX_CONN_QUEUE 128
 
@@ -20,10 +13,10 @@ class Server
     private:
         const char *const password;
         std::vector<struct pollfd> pollfds;
-        std::vector<Client> clients;
+        std::list<Client> clients;
 
         int initialize_listener(const int port);
-
+        Client &getClientAtIndex(size_t index);
     public:
         Server(const char *const password) : password(password) { }
         int init(int port);
