@@ -19,16 +19,17 @@ bool Channel::containsUser(std::string name) const
 std::string Channel::getUserList() const
 {
 	std::string s = "";
-	std::map<std::string, bool>::iterator it = isOperator.begin();
+	std::map<std::string, bool>::const_iterator it = isOperator.begin();
 	while (it != isOperator.end())
 	{
-		if (isOperator[it->first])
+		if (it->second)
 			s += "@";
 		s += it->first;
 		it++;
 		if (it != isOperator.end())
 			s += ",";
 	}
+	return s;
 }
 
 void Channel::addUser(std::string name)

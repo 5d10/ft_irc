@@ -163,7 +163,7 @@ int Server::OnClientRead(size_t index)
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
-					std::cout << Channel("#chan1", "nick1").getUserList() << std::endl;
+					std::cout << "TEST: " << Channel("#chan1", "nick1").getUserList() << std::endl;
 				}
 				else
 				{

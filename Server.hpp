@@ -15,7 +15,7 @@ class Server
         const char *const password;
         std::vector<struct pollfd> pollfds;
         std::list<Client> clients;
-        std::map<std::string, Client&> client_map;
+        // std::map<std::string, Client&> client_map;
 
         int initialize_listener(const int port);
         Client &getClientAtIndex(size_t index);
