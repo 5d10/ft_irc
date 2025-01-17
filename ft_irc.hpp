@@ -12,6 +12,7 @@
 # include <csignal>
 # include <cerrno> // is this allowed?
 # include <list>
+# include <map>
 # include <iterator>
 
 #endif
