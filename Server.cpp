@@ -163,7 +163,7 @@ int Server::OnClientRead(size_t index)
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
-					std::cout << "TEST: " << Channel("#chan1", "nick1").getUserList() << std::endl;
+					std::cout << "TEST: " << Channel("#chan1", "nick1").getUserList() << std::endl; // seems to be fine, nicks are appraently alphabetically ordered
 				}
 				else
 				{
@@ -174,8 +174,25 @@ int Server::OnClientRead(size_t index)
 				}
 				pollfds[i].events |= POLLOUT;
 			}
-			else if (client.GetReadBuffer() == "USER user 0 * :realname\r")
+			else if (client.GetReadBuffer() == "USER user 0 * :realname\r") // https://datatracker.ietf.org/doc/html/rfc1459#section-8.5 read this fucker
 			{
+				// https://datatracker.ietf.org/doc/html/rfc1459#section-4.1.3 and this
+				// username = user
+				// hostname = 0
+				// servername = *
+				// realname = :realname
+
+				/*
+				[Client] Message received from client 4 << CAP LS 302
+
+				[Client] Message received from client 4 << PASS server_pass
+				NICK nick1
+				USER user 0 * :realname
+				[Server] Message sent to client 4       >> :localhost 464  :Password incorrect.
+				[Server] Message sent to client 4       >> :nick1!@localhost NICK nick1
+				*/
+
+
 				// Copied Over From Another ft_irc
 				getClientAtIndex(i).AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
 				// getClientAtIndex(i).AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
