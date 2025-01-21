@@ -3,6 +3,7 @@
 Channel::Channel(std::string channelName, std::string user)
 {
 	name = channelName;
+	isInviteOnly = channelName[0] == '&'; // ?
 	isOperator[user] = true;
 }
 
@@ -39,7 +40,7 @@ void Channel::addUser(std::string name)
 
 bool Channel::isValidChannelName(std::string name)
 {
-    if (name.size() > 200)
+    if (name.size() < 2 || name.size() > 200)
 		return false;
 	if (name[0] != '#' || name[0] != '&')
 		return false;
