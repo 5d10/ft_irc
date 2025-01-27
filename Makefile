@@ -11,12 +11,14 @@ endif
 HEADS = ft_irc.hpp \
 		Server.hpp \
 		Client.hpp \
-		Channel.hpp
+		Channel.hpp \
+		Task.hpp
 
 SRC = 	main.cpp \
 		Server.cpp \
 		Client.cpp \
-		Channel.cpp
+		Channel.cpp \
+		Task.cpp
 
 OBJS = $(SRC:%.cpp=%.o)
 

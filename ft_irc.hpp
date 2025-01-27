@@ -14,5 +14,6 @@
 # include <list>
 # include <map>
 # include <iterator>
+# include <cctype>
 
 #endif

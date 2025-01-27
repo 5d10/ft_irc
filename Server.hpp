@@ -4,6 +4,7 @@
 #include "ft_irc.hpp"
 #include "Client.hpp"
 #include "Channel.hpp"
+#include "Task.hpp"
 
 # define MAX_CONN_QUEUE 128
 

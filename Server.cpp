@@ -164,6 +164,7 @@ int Server::OnClientRead(size_t index)
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
 					std::cout << "TEST: " << Channel("#chan1", "nick1").getUserList() << std::endl; // seems to be fine, nicks are appraently alphabetically ordered
+					Task("JOIN #chan1\r");
 				}
 				else
 				{
