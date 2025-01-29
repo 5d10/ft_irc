@@ -57,3 +57,46 @@ void Task::parse(std::string fullCmd)
     for (unsigned int i = 0; i < args.size(); i++)
         std::cout << "- " << args[i] << std::endl;
 }
+
+void Task::ping(Client &c)
+{
+    if (args.size() != 1)
+        return;
+    bool isValidArg = true;
+    bool hasLagPrefix = args[0].rfind("LAG", 0) == 0;
+    for (unsigned int i = hasLagPrefix ? 3 : 0; i < args[0].size() && isValidArg; i++)
+        isValidArg = std::isdigit(args[0][i]);
+    if (isValidArg)
+    {
+        // struct timeval time;
+	    // gettimeofday(&time, NULL);
+        // unsigned long msec = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+        std::string pongMsg = ":nick1!user@localhost PONG :";
+        if (hasLagPrefix)
+            pongMsg += "LAG";
+        // unsigned long div = 1;
+        // while (msec / div >= 10)
+        //     div *= 10;
+        // while (div > 0)
+        // {
+        //     pongMsg += '0' + (msec / div % 10);
+        //     div /= 10;
+        // }
+        pongMsg += args[0].substr(hasLagPrefix ? 3 : 0, args[0].size());
+        pongMsg += "\r\n";
+        std::cout << pongMsg;
+        c.AddToWriteBuffer(pongMsg);
+    }
+}
+
+void Task::run(Client &c, Server &s)
+{
+    (void)s;
+    if (cmd == "PING")
+        ping(c);
+}
+
+void Task::run(std::string fullCmd, Client &c, Server &s)
+{
+    Task(fullCmd).run(c, s);
+}

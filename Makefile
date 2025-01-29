@@ -21,17 +21,18 @@ SRC = 	main.cpp \
 		Task.cpp
 
 OBJS = $(SRC:%.cpp=%.o)
+DEPS = $(SRC:%.cpp=%.d)
 
 all: $(NAME) 
 
 %.o: %.cpp $(HEADS)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 $(NAME): Makefile $(OBJS) $(HEADS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
 clean:
-	rm -f $(OBJS)
+	rm -f $(OBJS) $(DEPS)
 
 fclean: clean
 	rm -f $(NAME)

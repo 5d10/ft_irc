@@ -15,5 +15,6 @@
 # include <map>
 # include <iterator>
 # include <cctype>
+# include <sys/time.h> // ping(?
 
 #endif
