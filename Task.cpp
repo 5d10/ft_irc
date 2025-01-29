@@ -94,10 +94,10 @@ void Task::ping(Client &c)
 void Task::pass(Client &c, Server &s)
 {
 	(void)c;
-	if (args.size() != 1)
+	if (args.size() < 1)
 	{
 		#if DEBUG
-			std::cout << "debug: PASS: incorrect amount of arguments" << std::endl;
+			std::cout << "debug: PASS: no password given" << std::endl;
 		#endif
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS("PASS", c.nickname));
 	}
