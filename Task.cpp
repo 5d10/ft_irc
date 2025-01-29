@@ -33,7 +33,7 @@ void Task::parse(std::string fullCmd)
     std::vector<std::string> split;
     while (fullCmd.size() > 0)
     {
-        if (std::isspace(fullCmd[0]))
+        if (std::isspace(fullCmd[0]))//my brother in christ, we only want to care about ' '
         {
             unsigned int newStart = 0;
             while (newStart < fullCmd.size() && std::isspace(fullCmd[newStart]))
@@ -52,8 +52,10 @@ void Task::parse(std::string fullCmd)
     cmd = split[0];
     args.reserve(split.size());
     args.insert(args.begin(), split.begin() + 1, split.end());
+	#if DEBUG
     std::cout << "COMMAND: " << cmd << std::endl;
     std::cout << "ARGS: " << std::endl;
+	#endif
     for (unsigned int i = 0; i < args.size(); i++)
         std::cout << "- " << args[i] << std::endl;
 }
@@ -89,11 +91,45 @@ void Task::ping(Client &c)
     }
 }
 
+void Task::pass(Client &c, Server &s)
+{
+	(void)c;
+	if (args.size() != 1)
+	{
+		#if DEBUG
+			std::cout << "debug: PASS: incorrect amount of arguments" << std::endl;
+		#endif
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS("PASS", c.nickname));
+	}
+	else if (c.validated)
+	{
+		#if DEBUG
+			std::cout << "debug: PASS: already validated" << std::endl;
+		#endif
+		c.AddToWriteBuffer(ERR_ALREADYREGISTRED(c.nickname));
+	}
+	else if (args[0] == s.password)
+	{
+		#if DEBUG
+			std::cout << "debug: PASS: password match" << std::endl;
+		#endif
+		c.validated = true;
+	}
+	else
+	{
+		#if DEBUG
+			std::cout << "debug: PASS: wrong password" << std::endl;
+		#endif
+		c.AddToWriteBuffer(ERR_PASSWDMISMATCH(c.nickname));//PLEASE replace with an attempt to get the nonexisting name
+	}
+}
+
 void Task::run(Client &c, Server &s)
 {
-    (void)s;
     if (cmd == "PING")
         ping(c);
+	else if (cmd == "PASS")
+		pass(c, s);
 }
 
 void Task::run(std::string fullCmd, Client &c, Server &s)

@@ -1,9 +1,13 @@
 #ifndef TASK_HPP
-#define TASK_HPP
+# define TASK_HPP
 
-#include "ft_irc.hpp"
-#include "Server.hpp"
-#include "Client.hpp"
+# include "ft_irc.hpp"
+# include "Server.hpp"
+# include "Client.hpp"
+
+# define ERR_PASSWDMISMATCH(client) (":localhost 464 " +  client + " :Password incorrect\r\n")
+# define ERR_ALREADYREGISTRED(client) (":localhost 462 " + client + " :You may not reregister\r\n")
+# define ERR_NEEDMOREPARAMS(cmd, client) (":localhost 461 " + client + ' ' + cmd + " :Not enough parameters\r\n")
 
 class Server;
 
@@ -18,6 +22,7 @@ class Task
         // e_types getType();
 
         void ping(Client &c);
+		void pass(Client &c, Server &s);
     public:
         Task();
         Task(std::string fullCmd);

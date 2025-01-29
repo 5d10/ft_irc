@@ -13,7 +13,6 @@
 class Server
 {
     private:
-        const char *const password;
         std::vector<struct pollfd> pollfds;
         std::list<Client> clients;
         std::map<std::string, const Client&> registered;
@@ -21,6 +20,8 @@ class Server
         int initialize_listener(const int port);
         Client &getClientAtIndex(size_t index);
     public:
+        const char *const password;
+
         Server(const char *const password) : password(password) { }
         int init(int port);
         void AddClient(int fd, short flags);

@@ -81,9 +81,13 @@ void Server::AcceptClient()
 	socklen_t client_addr_len = sizeof(client_addr);
 	int client_fd = -1;
 	while (client_fd < 0)//this should not be needed
-		client_fd = accept(pollfds[0].fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_addr_len); // returns -1 on failure, usually EAGAIN due to non-block//if properly programmed, we never get to see EAGAIN
-	AddClient(client_fd, POLLIN | POLLHUP); // we might want some global precompiler thing for these, in case its not just POLLIN walways
+		client_fd = accept(pollfds[0].fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_addr_len);
+		// returns -1 on failure, usually EAGAIN due to non-block//if properly programmed, we never get to see EAGAIN
+	
+	// we might want some global precompiler thing for these, in case its not just POLLIN walways
+	AddClient(client_fd, POLLIN | POLLHUP);
 	//do we want to do anything else with the newcomer? like putting there recent messages or something
+
 	std::cout << "WORLD WIDE NOISE 🗣 🗣 🗣" << std::endl;//DEBUG
 }
 
@@ -207,7 +211,7 @@ int Server::OnClientRead(size_t index)
 				
 				pollfds[i].events |= POLLOUT;
 			}
-			else if (client.GetReadBuffer().rfind("PING", 0) == 0)
+			else if (client.GetReadBuffer().size())//(client.GetReadBuffer().rfind("PING", 0) == 0)
 			{
 				Task::run(client.GetReadBuffer(), client, *this);
 				if (client.GetWriteBuffer().size() > 0) // uhhhhhhh

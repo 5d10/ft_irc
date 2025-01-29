@@ -18,23 +18,30 @@ class Client
         }
 
     public:
+		bool validated;
+		std::string nickname;
+
         Client(int fd)
         {
             this->fd = fd;
             rd_buff = "";
             wr_buff = "";
+			validated = false;
         }
+		//why tf copy constructor?
         Client(const Client &other)
         {
             fd = other.fd;
             rd_buff = other.rd_buff;
             wr_buff = other.wr_buff;
+			validated = other.validated;
         }
         Client &operator=(const Client &other)
         {
             fd = other.fd;
             rd_buff = other.rd_buff;
             wr_buff = other.wr_buff;
+			validated = other.validated;
             return *this;
         }
         ~Client() {}
