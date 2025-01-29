@@ -4,11 +4,11 @@
 # include "ft_irc.hpp"
 # include "Server.hpp"
 # include "Client.hpp"
-
+# define ERR_NONICKNAMEGIVEN(client) (":localhost 431 " + client + " :No nickname given\r\f")
+# define ERR_NICKCOLLISION(client, nick) (":localhost 436 " + client + ' ' + nick + " :Nickname collision KILL")
 # define ERR_PASSWDMISMATCH(client) (":localhost 464 " +  client + " :Password incorrect\r\n")
 # define ERR_ALREADYREGISTRED(client) (":localhost 462 " + client + " :You may not reregister\r\n")
-# define ERR_NEEDMOREPARAMS(cmd, client) (":localhost 461 " + client + ' ' + cmd + " :Not enough parameters\r\n")
-
+# define ERR_NEEDMOREPARAMS(client, cmd) (":localhost 461 " + client + ' ' + cmd + " :Not enough parameters\r\n")
 class Server;
 
 class Task
@@ -23,6 +23,7 @@ class Task
 
         void ping(Client &c);
 		void pass(Client &c, Server &s);
+		void nick(Client &c, Server &s);
     public:
         Task();
         Task(std::string fullCmd);

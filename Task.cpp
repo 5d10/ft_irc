@@ -97,37 +97,70 @@ void Task::pass(Client &c, Server &s)
 	if (args.size() < 1)
 	{
 		#if DEBUG
-			std::cout << "debug: PASS: no password given" << std::endl;
+			std::cout << "PASS: no password given" << std::endl;
 		#endif
-		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS("PASS", c.nickname));
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PASS"));
 	}
 	else if (c.validated)
 	{
 		#if DEBUG
-			std::cout << "debug: PASS: already validated" << std::endl;
+			std::cout << "PASS: already validated" << std::endl;
 		#endif
 		c.AddToWriteBuffer(ERR_ALREADYREGISTRED(c.nickname));
 	}
 	else if (args[0] == s.password)
 	{
 		#if DEBUG
-			std::cout << "debug: PASS: password match" << std::endl;
+			std::cout << "PASS: password match" << std::endl;
 		#endif
 		c.validated = true;
 	}
 	else
 	{
 		#if DEBUG
-			std::cout << "debug: PASS: wrong password" << std::endl;
+			std::cout << "PASS: wrong password" << std::endl;
 		#endif
 		c.AddToWriteBuffer(ERR_PASSWDMISMATCH(c.nickname));//PLEASE replace with an attempt to get the nonexisting name
 	}
+}
+
+void Task::nick(Client &c, Server &s)
+{
+	if (args.size() < 1)
+	{
+		#if DEBUG
+			std::cout << "NICK: no nickname given" << std::endl;
+		#endif
+		c.AddToWriteBuffer(ERR_NONICKNAMEGIVEN(c.nickname));
+		return;
+	}
+	std::list<Client>::iterator i = s.clients.begin();
+	const std::list<Client>::iterator end = s.clients.end();
+	while (i != end)
+	{
+		if (i->nickname == args[0])
+		{
+			#if DEBUG
+				std::cout << "NICK: nickname collision" << std::endl;
+			#endif
+			c.AddToWriteBuffer(ERR_NICKCOLLISION(c.nickname, args[0]));
+			return;
+		}
+		++i;
+	}
+	c.nickname = args[0];
+	#if DEBUG
+		std::cout << "NICK: success" << std::endl;
+	#endif
+	
 }
 
 void Task::run(Client &c, Server &s)
 {
     if (cmd == "PING")
         ping(c);
+	else if (cmd == "NICK")
+		nick(c, s);
 	else if (cmd == "PASS")
 		pass(c, s);
 }
