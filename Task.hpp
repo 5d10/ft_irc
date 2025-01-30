@@ -24,6 +24,7 @@ class Task
         void ping(Client &c);
 		void pass(Client &c, Server &s);
 		void nick(Client &c, Server &s);
+        void quit(Client &c, Server &s);
     public:
         Task();
         Task(std::string fullCmd);

@@ -17,6 +17,7 @@ class Channel
         std::string topic;
         bool isTopicCommandOpOnly;
         ssize_t userLimit;
+        std::map<std::string, const Client&>& clients;
     public:
         Channel(std::string channelName, std::string user);
         Channel(const Channel &other);
@@ -26,7 +27,8 @@ class Channel
         bool containsUser(std::string user) const;
         std::string getUserList() const;
         void addUser(std::string name);
-
+        void removeUser(std::string name);
+        void broadcast(std::string msg);
         static bool isValidChannelName(std::string name);
 };
 

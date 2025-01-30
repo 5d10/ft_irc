@@ -14,13 +14,15 @@ class Server
 {
     private:
         std::vector<struct pollfd> pollfds;
-        std::map<std::string, const Client&> registered;
+
+
 
         int initialize_listener(const int port);
         Client &getClientAtIndex(size_t index);
     public:
         const char *const password;
         std::list<Client> clients;
+        std::map<std::string, const Client&> registered;
 
         Server(const char *const password) : password(password) { }
         int init(int port);
@@ -30,6 +32,5 @@ class Server
         int OnClientRead(size_t index);
         int OnClientSend(size_t index);
         int cycle();
-
 };
 #endif

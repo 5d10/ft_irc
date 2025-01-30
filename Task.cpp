@@ -155,6 +155,23 @@ void Task::nick(Client &c, Server &s)
 	
 }
 
+void Task::quit(Client &c, Server &s)
+{
+	std::string quit_message;
+	if (args.size() < 1)
+		quit_message = "[username] has left the chat"; //* We need to agree on a default message
+	else
+		quit_message = args[0];
+	for (/*els canals al que esta ficat*/)
+	{
+		//TODO this is pseudocode
+		channels[i].removeUser(c.nickname);
+		c.channels[i].broadcast(quit_message);
+	}
+	(void)c;
+	(void)s;
+}
+
 void Task::run(Client &c, Server &s)
 {
     if (cmd == "PING")

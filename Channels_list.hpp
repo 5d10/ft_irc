@@ -5,7 +5,7 @@ std::vector<pollfds> fds;//MUST be a vector
 // so searching is needed
 
 std::map<std::string, Client*>;
-Client& find_client(unsigned int i, std::list<Client> clients);
+Client& find_client(unsigned int i, std::list<Client> clients);//already exisst as map::find()
 
 class Channel
 {
