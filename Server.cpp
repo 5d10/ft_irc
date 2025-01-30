@@ -74,6 +74,36 @@ void Server::DisconnectClient(size_t index)
 	clients.erase(it);
 }
 
+void Server::EraseClient(Client client&)
+{
+	{//remove from Channels
+		const std::map<std::string, Channel&>::iterator end = c.joined.end();
+		for (std::map<std::string, Channel&>::iterator i = c.joined.begin(); i != end; ++i)
+		{
+			i->second.removeUser(c.nickname);
+			i->second.broadcast(quit_message);
+		}
+	}
+
+	//remove from Server
+	unsigned int i = 0;
+	std::list<Client>::iterator it = clients.begin();
+	std::list<Client>::iterator end = clients.end();
+	
+	while (it != end && it->nickname != client.nickname)
+	{
+		i += 1;
+		it += 1;
+	}
+	//! What if we DO reach end? Can that even happen?
+
+	close(pollfds[index].fd);//?wait, didn't we also have the fd stored in Client? if that is the case then we might put the close() on ~Client
+	pollfds.erase(pollfds.begin() + i);
+	registered.erase(client.nickname);
+	clients.erase(it);
+	//! I hope I haven't forgot anything
+}
+
 void Server::AcceptClient()
 {
 	// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/

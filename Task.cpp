@@ -155,19 +155,15 @@ void Task::nick(Client &c, Server &s)
 	
 }
 
-void Task::quit(Client &c)
+void Task::quit(Client &c, Server &s)
 {
 	std::string quit_message;
 	if (args.size() < 1)
 		quit_message = "[username] has left the chat"; //* We need to agree on a default message
 	else
 		quit_message = args[0];
-	const std::map<std::string, Channel&>::iterator end = c.joined.end();
-	for (std::map<std::string, Channel&>::iterator i = c.joined.begin(); i != end; ++i)
-	{
-		i->second.removeUser(c.nickname);
-		i->second.broadcast(quit_message);
-	}
+	
+	s.EraseClient(c);
 }
 
 void Task::run(Client &c, Server &s)

@@ -19,6 +19,7 @@ class Server
 
         int initialize_listener(const int port);
         Client &getClientAtIndex(size_t index);
+        void DisconnectClient(size_t index);//*use EraseClient instead
     public:
         const char *const password;
         std::list<Client> clients;
@@ -27,7 +28,7 @@ class Server
         Server(const char *const password) : password(password) { }
         int init(int port);
         void AddClient(int fd, short flags);
-        void DisconnectClient(size_t index);
+		void EraseClient(Client client&);
         void AcceptClient();
         int OnClientRead(size_t index);
         int OnClientSend(size_t index);
