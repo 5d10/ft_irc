@@ -101,10 +101,10 @@ void Task::pass(Client &c, Server &s)
 		#endif
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PASS"));
 	}
-	else if (c.validated)
+	else if (c.passed)
 	{
 		#if DEBUG
-			std::cout << "PASS: already validated" << std::endl;
+			std::cout << "PASS: already passed" << std::endl;
 		#endif
 		c.AddToWriteBuffer(ERR_ALREADYREGISTRED(c.nickname));
 	}
@@ -113,7 +113,7 @@ void Task::pass(Client &c, Server &s)
 		#if DEBUG
 			std::cout << "PASS: password match" << std::endl;
 		#endif
-		c.validated = true;
+		c.passed = true;
 	}
 	else
 	{
@@ -134,6 +134,21 @@ void Task::nick(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_NONICKNAMEGIVEN(c.nickname));
 		return;
 	}
+	
+	if (s.registered.find(args[0]) != s.registered.end())
+	{
+		#if DEBUG
+			std::cout << "NICK: nickname collision" << std::endl;
+		#endif
+		c.AddToWriteBuffer(ERR_NICKCOLLISION(c.nickname, args[0]));
+		return;
+	}
+	c.nickname = args[0];
+	#if DEBUG
+		std::cout << "NICK: success" << std::endl;
+	#endif
+
+	/*
 	std::list<Client>::iterator i = s.clients.begin();
 	const std::list<Client>::iterator end = s.clients.end();
 	while (i != end)
@@ -151,8 +166,14 @@ void Task::nick(Client &c, Server &s)
 	c.nickname = args[0];
 	#if DEBUG
 		std::cout << "NICK: success" << std::endl;
-	#endif
-	
+	#endif*/
+}
+
+void Task::user(Client &c, Server &s)
+{
+	if (args.size() < 4)
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PASS"));
+	//TODO else if () check for ERR_ALREADYREGISTERED
 }
 
 void Task::run(Client &c, Server &s)
@@ -161,6 +182,8 @@ void Task::run(Client &c, Server &s)
         ping(c);
 	else if (cmd == "NICK")
 		nick(c, s);
+	else if (cmd == "PASS")
+		pass(c, s);
 	else if (cmd == "PASS")
 		pass(c, s);
 }

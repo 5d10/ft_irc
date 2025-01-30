@@ -15,10 +15,17 @@ class Client
             this->fd = -1;
             rd_buff = "";
             wr_buff = "";
+			passed = false;
+			nicked = false;
+			usered = false;
+			registered = false;
         }
 
     public:
-		bool validated;
+		bool passed;
+		bool nicked;
+		bool usered;
+		bool registered;
 		std::string nickname;
 
         Client(int fd)
@@ -26,7 +33,10 @@ class Client
             this->fd = fd;
             rd_buff = "";
             wr_buff = "";
-			validated = false;
+			passed = false;
+			nicked = false;
+			usered = false;
+			registered = false;
         }
 		//why tf copy constructor?
         Client(const Client &other)
@@ -34,14 +44,20 @@ class Client
             fd = other.fd;
             rd_buff = other.rd_buff;
             wr_buff = other.wr_buff;
-			validated = other.validated;
+			passed = other.passed;
+			nicked = other.nicked;
+			usered = other.usered;
+			registered = other.registered;
         }
         Client &operator=(const Client &other)
         {
             fd = other.fd;
             rd_buff = other.rd_buff;
             wr_buff = other.wr_buff;
-			validated = other.validated;
+			passed = other.passed;
+			nicked = other.nicked;
+			usered = other.usered;
+			registered = other.registered;
             return *this;
         }
         ~Client() {}
