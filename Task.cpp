@@ -155,21 +155,19 @@ void Task::nick(Client &c, Server &s)
 	
 }
 
-void Task::quit(Client &c, Server &s)
+void Task::quit(Client &c)
 {
 	std::string quit_message;
 	if (args.size() < 1)
 		quit_message = "[username] has left the chat"; //* We need to agree on a default message
 	else
 		quit_message = args[0];
-	for (/*els canals al que esta ficat*/)
+	const std::map<std::string, Channel&>::iterator end = c.joined.end();
+	for (std::map<std::string, Channel&>::iterator i = c.joined.begin(); i != end; ++i)
 	{
-		//TODO this is pseudocode
-		channels[i].removeUser(c.nickname);
-		c.channels[i].broadcast(quit_message);
+		i->second.removeUser(c.nickname);
+		i->second.broadcast(quit_message);
 	}
-	(void)c;
-	(void)s;
 }
 
 void Task::run(Client &c, Server &s)

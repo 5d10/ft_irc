@@ -38,21 +38,24 @@ void Channel::addUser(std::string name)
 {
     isOperator[name] = false;
 }
+
 void Channel::removeUser(std::string name)
 {
 	isOperator.erase(name);
 }
+
 void Channel::broadcast(std::string msg)
 {
 	std::map<std::string, bool>::iterator i  = isOperator.begin();
 	std::map<std::string, bool>::iterator end  = isOperator.end();
 
-	while(i != end)
+	while (i != end)
 	{
 		clients.at(i->first).AddToWriteBuffer(msg);
 		++i;
 	}
 }
+
 bool Channel::isValidChannelName(std::string name)
 {
     if (name.size() < 2 || name.size() > 200)
