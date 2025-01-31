@@ -1,24 +1,29 @@
 #include "Channel.hpp"
 
-Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client&>& client_direction) : clients(client_direction)
+Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client&>& client_direction) : serverClients(client_direction)
 {
 	name = channelName;
 	isInviteOnly = channelName[0] == '&'; // ?
 	isOperator[user] = true;
 }
 
-// Channel::Channel(const Channel &other)
-// {
-// 	// TODO
-// 	(void)other;
-// }
+ Channel::Channel(const Channel &other): serverClients(other.serverClients)
+ {
+ 	*this = other;
+ }
 
-// Channel &Channel::operator=(const Channel &other)
-// {
-// 	// TODO
-// 	(void)other;
-// 	return *this;
-// }
+ Channel &Channel::operator=(const Channel &other)
+ {
+ 	name = other.name;
+	password = other.password;
+	isPasswordNeeded = other.isPasswordNeeded;
+	isOperator = other.isOperator;
+	invitedUsers = other.invitedUsers;
+	topic = other.topic;
+	isTopicCommandOpOnly = other.isTopicCommandOpOnly;
+	userLimit = other.userLimit;
+	return *this;
+ }
 
 Channel::~Channel()
 {
@@ -27,6 +32,7 @@ Channel::~Channel()
 
 bool Channel::containsUser(std::string name) const
 {
+	//*maybe we should consider getting rid of this or making it an always inline
     return isOperator.find(name) != isOperator.end();
 }
 
@@ -58,12 +64,12 @@ void Channel::removeUser(std::string name)
 
 void Channel::broadcast(std::string msg) const
 {
-	std::map<std::string, Client&>::const_iterator i  = clients.begin();
-	std::map<std::string, Client&>::const_iterator end  = clients.end();
+	std::map<std::string, Client&>::const_iterator i  = serverClients.begin();
+	std::map<std::string, Client&>::const_iterator end  = serverClients.end();
 
 	while (i != end)
 	{
-		clients.at(i->first).AddToWriteBuffer(msg);
+		serverClients.at(i->first).AddToWriteBuffer(msg);
 		++i;
 	}
 }

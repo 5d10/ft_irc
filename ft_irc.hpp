@@ -16,5 +16,6 @@
 # include <iterator>
 # include <cctype>
 # include <sys/time.h> // ping(?
+# include "utils.hpp"
 
 #endif

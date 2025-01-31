@@ -4,11 +4,19 @@
 # include "ft_irc.hpp"
 # include "Server.hpp"
 # include "Client.hpp"
-# define ERR_NONICKNAMEGIVEN(client) (":localhost 431 " + client + " :No nickname given\r\f")
-# define ERR_NICKCOLLISION(client, nick) (":localhost 436 " + client + ' ' + nick + " :Nickname collision KILL")
-# define ERR_PASSWDMISMATCH(client) (":localhost 464 " +  client + " :Password incorrect\r\n")
-# define ERR_ALREADYREGISTRED(client) (":localhost 462 " + client + " :You may not reregister\r\n")
+# include "utils.hpp"
+# define RPL_NOTOPIC(client, chnl) (":localhost 331 " + client + ' ' + chnl + " :No topic is set\r\n")
+# define RPL_TOPIC(client, chnl, topic) (":localhost 332 " + client + ' ' + chnl + " :" + topic + "\r\n")
+# define ERR_NOSUCHCHANNEL(client, chnl) (":localhost 403 " + client + ' ' + chnl + " :No such channel\r\n")
+# define ERR_NONICKNAMEGIVEN(client) (":localhost 431 " + client + " :No nickname given\r\n")
+# define ERR_NICKCOLLISION(client, nick) (":localhost 436 " + client + ' ' + nick + " :Nickname collision KILL\r\n")
 # define ERR_NEEDMOREPARAMS(client, cmd) (":localhost 461 " + client + ' ' + cmd + " :Not enough parameters\r\n")
+# define ERR_ALREADYREGISTRED(client) (":localhost 462 " + client + " :You may not reregister\r\n")
+# define ERR_PASSWDMISMATCH(client) (":localhost 464 " +  client + " :Password incorrect\r\n")
+# define ERR_CHANNELISFULLL(client, chnl) (":localhost 471 " + client + ' ' + chnl + " :Cannot join channel (+l)\r\n")
+# define ERR_INVITEONLYCHAN(client, chnl) (":localhost 473 " + client + ' ' + chnl + " :Cannot join channel (+i)\r\n")
+# define ERR_BADCHANNELKEY(client,chnl) (":localhost 475 " + client + ' ' + chnl + " :Cannot join channel (+k)\r\n")
+
 class Server;
 
 class Task
@@ -25,6 +33,7 @@ class Task
 		void pass(Client &c, Server &s);
 		void nick(Client &c, Server &s);
         void quit(Client &c, Server &s);
+		void join(Client &c, Server &s);
     public:
         Task();
         Task(std::string fullCmd);

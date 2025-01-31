@@ -120,7 +120,7 @@ void Task::pass(Client &c, Server &s)
 		#if DEBUG
 			std::cout << "PASS: wrong password" << std::endl;
 		#endif
-		c.AddToWriteBuffer(ERR_PASSWDMISMATCH(c.nickname));//PLEASE replace with an attempt to get the nonexisting name
+		c.AddToWriteBuffer(ERR_PASSWDMISMATCH(c.nickname));//!PLEASE replace with an attempt to get the nonexisting name
 	}
 }
 
@@ -155,6 +155,54 @@ void Task::nick(Client &c, Server &s)
 	
 }
 
+void Task::join(Client &c, Server &s)
+{
+	if (args.size() < 1) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return; }
+
+	std::vector<std::string> joining = string_split(args[0], ',');
+	std::vector<std::string> passwords;
+	if (1 < args.size())
+		passwords = string_split(args[1], ',');//consucutive ',' generate many entries, which we want
+	unsigned int i = joining.size();
+	while (i--)
+	{
+		if (!Channel::isValidChannelName(joining[i]))
+			c.AddToWriteBuffer(ERR_NOSUCHCHANNEL(c.nickname, joining[i]));
+		else if (s.channels.find(joining[i]) == s.channels.end())
+		{//the channel does not exist yet
+			s.channels.insert(std::pair<std::string, Channel>(joining[i], Channel(joining[i], c.nickname, s.registered)));//! make sure the default constructor initializaes everything to 0
+			//s.channels[joining[i]].isOperator[c.nickname] = true;
+			//? RPL_NOTOPIC is not said to be a possible reply of JOIN, yet it exists for other commands.
+				//? Is it possible for complete servers to unset an hypothetical default topic to achive a non-topic?
+			c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
+			//? are we forgetting anything?
+		}
+		else
+		{//the channel does exist
+			//? we should think whether Channel::addUser is called only if we know we want to add it or let it
+				//? check that itself AND send the numeric replies if needed
+			Channel* attempting = &(s.channels.at(joining[i]));
+			std::list<std::string>::iterator invitation = list_find(attempting->invitedUsers, c.nickname);
+
+			if (attempting->userLimit && attempting->userLimit <= static_cast<ssize_t>(attempting->isOperator.size()))
+				c.AddToWriteBuffer(ERR_CHANNELISFULLL(c.nickname, joining[i]));
+			else if (attempting->isInviteOnly && invitation == attempting->invitedUsers.end())
+				c.AddToWriteBuffer(ERR_INVITEONLYCHAN(c.nickname, joining[i]));
+			//subject does not require us for bans
+			else if (attempting->isPasswordNeeded && (passwords.size() < i || passwords[i] != attempting->password))
+				c.AddToWriteBuffer(ERR_BADCHANNELKEY(c.nickname, joining[i]));
+			else
+			{//join in
+				attempting->addUser(c.nickname);
+				if (attempting->isInviteOnly)
+					attempting->invitedUsers.erase(invitation);
+			}
+		}
+	}
+}
+
 void Task::quit(Client &c, Server &s)
 {
 	std::string quit_message;
@@ -170,6 +218,8 @@ void Task::run(Client &c, Server &s)
 {
     if (cmd == "PING")
         ping(c);
+	else if (cmd == "JOIN")
+		join(c, s);
 	else if (cmd == "NICK")
 		nick(c, s);
 	else if (cmd == "PASS")
