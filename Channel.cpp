@@ -1,12 +1,24 @@
 #include "Channel.hpp"
 
-Channel::Channel(std::string channelName, std::string user, std::map<std::string, const Client&>& client_direction)
+Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client&>& client_direction) : clients(client_direction)
 {
 	name = channelName;
 	isInviteOnly = channelName[0] == '&'; // ?
 	isOperator[user] = true;
-	clients = client_direction;
 }
+
+// Channel::Channel(const Channel &other)
+// {
+// 	// TODO
+// 	(void)other;
+// }
+
+// Channel &Channel::operator=(const Channel &other)
+// {
+// 	// TODO
+// 	(void)other;
+// 	return *this;
+// }
 
 Channel::~Channel()
 {
@@ -44,10 +56,10 @@ void Channel::removeUser(std::string name)
 	isOperator.erase(name);
 }
 
-void Channel::broadcast(std::string msg)
+void Channel::broadcast(std::string msg) const
 {
-	std::map<std::string, bool>::iterator i  = isOperator.begin();
-	std::map<std::string, bool>::iterator end  = isOperator.end();
+	std::map<std::string, Client&>::const_iterator i  = clients.begin();
+	std::map<std::string, Client&>::const_iterator end  = clients.end();
 
 	while (i != end)
 	{

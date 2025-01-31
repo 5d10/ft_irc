@@ -3,6 +3,10 @@
 
 #include "ft_irc.hpp"
 
+class Channel;
+
+// TODO: MOVE CODE TO CPP FILE FFS
+
 class Client
 {
     private:

@@ -74,6 +74,51 @@ void Server::DisconnectClient(size_t index)
 	clients.erase(it);
 }
 
+void Server::EraseClient(Client &client)
+{
+	/* commented this out so i can compile
+	{//remove from Channels
+		const std::map<std::string, Channel&>::iterator end = c.joined.end();
+		for (std::map<std::string, Channel&>::iterator i = c.joined.begin(); i != end; ++i)
+		{
+			i->second.removeUser(c.nickname);
+			i->second.broadcast(quit_message);
+		}
+	}
+	*/
+
+	//remove from Server
+	unsigned int i = 0;
+	std::list<Client>::iterator it = clients.begin();
+	std::list<Client>::iterator end = clients.end();
+	
+	while (it != end && it->nickname != client.nickname)
+	{
+		i++;
+		it++;
+	}
+	//! What if we DO reach end? Can that even happen?
+
+	close(pollfds[i].fd);//?wait, didn't we also have the fd stored in Client? if that is the case then we might put the close() on ~Client
+	pollfds.erase(pollfds.begin() + i);
+	registered.erase(client.nickname);
+	clients.erase(it);
+	//! I hope I haven't forgot anything
+	/*
+	Things this func does:
+	- For each channel:
+	  > Remove client from channel
+	  > Send quit msg to channel
+	- Find client in clients list and:
+	  > Close its fd
+	  > Remove it from the pollfds vector
+	  > Remove it from the list of registered clients
+	  > Remove it from the list of all clients
+	
+	Seems good to me ig
+	*/
+}
+
 void Server::AcceptClient()
 {
 	// https://reactive.so/post/42-a-comprehensive-guide-to-ft_irc/
@@ -167,7 +212,7 @@ int Server::OnClientRead(size_t index)
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
-					std::cout << "TEST: " << Channel("#chan1", "nick1").getUserList() << std::endl; // seems to be fine, nicks are appraently alphabetically ordered
+					std::cout << "TEST: " << Channel("#chan1", "nick1", registered).getUserList() << std::endl; // seems to be fine, nicks are appraently alphabetically ordered
 					// Task("JOIN #chan1\r");
 				}
 				else
