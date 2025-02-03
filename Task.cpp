@@ -141,9 +141,9 @@ void Task::nick(Client &c, Server &s)
 		if (i->nickname == args[0])
 		{
 			#if DEBUG
-				std::cout << "NICK: nickname collision" << std::endl;
+				std::cout << "NICK: nickname in use" << std::endl;
 			#endif
-			c.AddToWriteBuffer(ERR_NICKCOLLISION(c.nickname, args[0]));
+			c.AddToWriteBuffer(ERR_NICKNAMEINUSE(c.nickname, args[0]));
 			return;
 		}
 		++i;
@@ -216,14 +216,22 @@ void Task::quit(Client &c, Server &s)
 
 void Task::run(Client &c, Server &s)
 {
-    if (cmd == "PING")
+	if (cmd == "PASS")
+		pass(c, s);
+	else if (!c.validated)
+		c.AddToWriteBuffer(ERR_NOTREGISTERED(c.nickname));
+    else if (cmd == "PING")
         ping(c);
 	else if (cmd == "JOIN")
 		join(c, s);
 	else if (cmd == "NICK")
 		nick(c, s);
-	else if (cmd == "PASS")
-		pass(c, s);
+	else if (cmd == "USERS")
+		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
+	else if (cmd == "SUMMON")
+		c.AddToWriteBuffer(ERR_SUMMONDISABLED(c.nickname));
+	else if (c.validated)
+		c.AddToWriteBuffer(ERR_UNKNOWNCOMMAND(c.nickname, cmd));
 }
 
 void Task::run(std::string fullCmd, Client &c, Server &s)
