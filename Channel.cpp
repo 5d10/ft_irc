@@ -3,7 +3,7 @@
 Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client&>& client_direction) : serverClients(client_direction)
 {
 	name = channelName;
-	isInviteOnly = channelName[0] == '&'; // ?
+	isInviteOnly = channelName[0] == '&'; //! ?
 	isOperator[user] = true;
 }
 
@@ -78,7 +78,7 @@ bool Channel::isValidChannelName(std::string name)
 {
     if (name.size() < 2 || name.size() > 200)
 		return false;
-	if (name[0] != '#' || name[0] != '&')
+	if (name[0] != '#' && name[0] != '&')
 		return false;
 	for (unsigned int i = 1; i < name.size(); i++)
 		if (name[i] == ' ' || name[i] == ',' || name[i] == 7)

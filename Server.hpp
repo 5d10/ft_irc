@@ -29,7 +29,7 @@ class Server
         Server(const char *const password) : password(password) { }
         int init(int port);
         void AddClient(int fd, short flags);
-		void EraseClient(Client &client);
+		void EraseClient(Client &client, std::string quit_message);
         void AcceptClient();
         int OnClientRead(size_t index);
         int OnClientSend(size_t index);

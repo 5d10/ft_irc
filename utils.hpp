@@ -9,6 +9,6 @@ std::vector<std::string> string_split(const std::string &string, const char &sep
 
 //template<class C>
 //typename std::list<C>::iterator list_find(std::list<C> list, C searched);
-std::list<std::string>::iterator list_find(std::list<std::string> list, std::string searched);
+std::list<std::string>::iterator list_find(std::list<std::string>& list, std::string searched);
 
 #endif

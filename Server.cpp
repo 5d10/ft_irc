@@ -74,18 +74,16 @@ void Server::DisconnectClient(size_t index)
 	clients.erase(it);
 }
 
-void Server::EraseClient(Client &client)
+void Server::EraseClient(Client &client, std::string quit_message)
 {
-	/* commented this out so i can compile
 	{//remove from Channels
-		const std::map<std::string, Channel&>::iterator end = c.joined.end();
-		for (std::map<std::string, Channel&>::iterator i = c.joined.begin(); i != end; ++i)
+		const std::map<std::string, Channel&>::iterator end = client.joined.end();
+		for (std::map<std::string, Channel&>::iterator i = client.joined.begin(); i != end; ++i)
 		{
-			i->second.removeUser(c.nickname);
+			i->second.removeUser(client.nickname);
 			i->second.broadcast(quit_message);
 		}
 	}
-	*/
 
 	//remove from Server
 	unsigned int i = 0;

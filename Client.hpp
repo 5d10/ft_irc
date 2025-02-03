@@ -13,7 +13,6 @@ class Client
         int fd;
         std::string rd_buff;
         std::string wr_buff;
-        std::map<std::string, Channel&> joined;
 
         Client()
         {
@@ -25,6 +24,7 @@ class Client
     public:
 		bool validated;
 		std::string nickname;
+        std::map<std::string, Channel&> joined;
 
         Client(int fd)
         {

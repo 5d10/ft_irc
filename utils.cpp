@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "Server.hpp"
 
 //it would be nice if you added the capacity for it to treat things between quotes
 //	as a solid block IF told to do so i.e. bool argument
@@ -27,11 +28,15 @@ std::vector<std::string> string_split(const std::string &string, const char &sep
 	return (result);
 }
 
-std::list<std::string>::iterator list_find(std::list<std::string> list, std::string searched)
+std::list<std::string>::iterator list_find(std::list<std::string>& list, std::string searched)
 {
 	std::list<std::string>::iterator i = list.begin();
-	const std::list<std::string>::iterator end = list.end();
-	while (i != end && *i != searched) ++i;
+	std::list<std::string>::iterator end = list.end();
+	while (i != end && *i != searched)
+		++i;
+	#if DEBUG
+		std::cout << "list_find: found = " << (i != end) << std::endl;
+	#endif
 	return (i);
 }
 

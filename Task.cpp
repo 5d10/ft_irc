@@ -169,20 +169,31 @@ void Task::join(Client &c, Server &s)
 	while (i--)
 	{
 		if (!Channel::isValidChannelName(joining[i]))
+		{
+			#if DEBUG
+				std::cout << "JOIN: invalid channel name" << std::endl;
+			#endif
 			c.AddToWriteBuffer(ERR_NOSUCHCHANNEL(c.nickname, joining[i]));
+		}
 		else if (s.channels.find(joining[i]) == s.channels.end())
 		{//the channel does not exist yet
+			#if DEBUG
+				std::cout << "JOIN: creating channel " << joining[i] << std::endl;
+			#endif
 			s.channels.insert(std::pair<std::string, Channel>(joining[i], Channel(joining[i], c.nickname, s.registered)));//! make sure the default constructor initializaes everything to 0
 			//s.channels[joining[i]].isOperator[c.nickname] = true;
 			//? RPL_NOTOPIC is not said to be a possible reply of JOIN, yet it exists for other commands.
 				//? Is it possible for complete servers to unset an hypothetical default topic to achive a non-topic?
 			c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
-			//? are we forgetting anything?
+			//! c.AddToWriteBuffer(/*RPL_NAMREPLY*/);
 		}
 		else
 		{//the channel does exist
 			//? we should think whether Channel::addUser is called only if we know we want to add it or let it
 				//? check that itself AND send the numeric replies if needed
+			#if DEBUG
+				std::cout << "JOIN: trying to join channel " << joining[i] << std::endl;
+			#endif
 			Channel* attempting = &(s.channels.at(joining[i]));
 			std::list<std::string>::iterator invitation = list_find(attempting->invitedUsers, c.nickname);
 
@@ -195,11 +206,24 @@ void Task::join(Client &c, Server &s)
 				c.AddToWriteBuffer(ERR_BADCHANNELKEY(c.nickname, joining[i]));
 			else
 			{//join in
+				#if DEBUG
+					std::cout << "JOIN: joining channel " << joining[i] << std::endl;
+				#endif
 				attempting->addUser(c.nickname);
 				if (attempting->isInviteOnly)
+				{
+					#if DEBUG
+						std::cout << "JOIN: clipping invite of " << *invitation << std::endl;
+					#endif
 					attempting->invitedUsers.erase(invitation);
+				}
+				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], s.channels.at(joining[i]).topic));
+			//! c.AddToWriteBuffer(/*RPL_NAMREPLY*/);
 			}
 		}
+		#if DEBUG
+			std::cout << "JOIN: done"  << std::endl;
+		#endif
 	}
 }
 
@@ -211,15 +235,22 @@ void Task::quit(Client &c, Server &s)
 	else
 		quit_message = args[0];
 	
-	s.EraseClient(c);
+	s.EraseClient(c, "QUIT " + quit_message);
 }
 
 void Task::run(Client &c, Server &s)
 {
+	if (cmd == "CAP")
+		return;
 	if (cmd == "PASS")
 		pass(c, s);
 	else if (!c.validated)
+	{
+		#if DEBUG
+			std::cout << "ANY: not validated" << std::endl;
+		#endif
 		c.AddToWriteBuffer(ERR_NOTREGISTERED(c.nickname));
+	}
     else if (cmd == "PING")
         ping(c);
 	else if (cmd == "JOIN")
