@@ -120,7 +120,7 @@ void Task::pass(Client &c, Server &s)
 		#if DEBUG
 			std::cout << "PASS: wrong password" << std::endl;
 		#endif
-		c.AddToWriteBuffer(ERR_PASSWDMISMATCH(c.nickname));//PLEASE replace with an attempt to get the nonexisting name
+		c.AddToWriteBuffer(ERR_PASSWDMISMATCH(c.nickname));//!PLEASE replace with an attempt to get the nonexisting name
 	}
 }
 
@@ -141,18 +141,90 @@ void Task::nick(Client &c, Server &s)
 		if (i->nickname == args[0])
 		{
 			#if DEBUG
-				std::cout << "NICK: nickname collision" << std::endl;
+				std::cout << "NICK: nickname in use" << std::endl;
 			#endif
-			c.AddToWriteBuffer(ERR_NICKCOLLISION(c.nickname, args[0]));
+			c.AddToWriteBuffer(ERR_NICKNAMEINUSE(c.nickname, args[0]));
 			return;
 		}
 		++i;
 	}
-	c.nickname = args[0];
+	s.Rename(c, args[0]);
 	#if DEBUG
 		std::cout << "NICK: success" << std::endl;
 	#endif
 	
+}
+
+void Task::join(Client &c, Server &s)
+{
+	if (args.size() < 1) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return; }
+
+	std::vector<std::string> joining = string_split(args[0], ',');
+	std::vector<std::string> passwords;
+	if (1 < args.size())
+		passwords = string_split(args[1], ',');//consucutive ',' generate many entries, which we want
+	unsigned int i = joining.size();
+	while (i--)
+	{
+		if (!Channel::isValidChannelName(joining[i]))
+		{
+			#if DEBUG
+				std::cout << "JOIN: invalid channel name" << std::endl;
+			#endif
+			c.AddToWriteBuffer(ERR_NOSUCHCHANNEL(c.nickname, joining[i]));
+		}
+		else if (s.channels.find(joining[i]) == s.channels.end())
+		{//the channel does not exist yet
+			#if DEBUG
+				std::cout << "JOIN: creating channel " << joining[i] << std::endl;
+			#endif
+			s.channels.insert(std::pair<std::string, Channel>(joining[i], Channel(joining[i], c.nickname, s.registered)));//! make sure the default constructor initializaes everything to 0
+			//s.channels[joining[i]].isOperator[c.nickname] = true;
+			//? RPL_NOTOPIC is not said to be a possible reply of JOIN, yet it exists for other commands.
+				//? Is it possible for complete servers to unset an hypothetical default topic to achive a non-topic?
+			c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
+			//! c.AddToWriteBuffer(/*RPL_NAMREPLY*/);
+		}
+		else
+		{//the channel does exist
+			//? we should think whether Channel::addUser is called only if we know we want to add it or let it
+				//? check that itself AND send the numeric replies if needed
+			#if DEBUG
+				std::cout << "JOIN: trying to join channel " << joining[i] << std::endl;
+			#endif
+			Channel* attempting = &(s.channels.at(joining[i]));
+			std::list<std::string>::iterator invitation = list_find(attempting->invitedUsers, c.nickname);
+
+			if (attempting->userLimit && attempting->userLimit <= static_cast<ssize_t>(attempting->isOperator.size()))
+				c.AddToWriteBuffer(ERR_CHANNELISFULLL(c.nickname, joining[i]));
+			else if (attempting->isInviteOnly && invitation == attempting->invitedUsers.end())
+				c.AddToWriteBuffer(ERR_INVITEONLYCHAN(c.nickname, joining[i]));
+			//subject does not require us for bans
+			else if (attempting->isPasswordNeeded && (passwords.size() < i || passwords[i] != attempting->password))
+				c.AddToWriteBuffer(ERR_BADCHANNELKEY(c.nickname, joining[i]));
+			else
+			{//join in
+				#if DEBUG
+					std::cout << "JOIN: joining channel " << joining[i] << std::endl;
+				#endif
+				attempting->addUser(c.nickname);
+				if (attempting->isInviteOnly)
+				{
+					#if DEBUG
+						std::cout << "JOIN: clipping invite of " << *invitation << std::endl;
+					#endif
+					attempting->invitedUsers.erase(invitation);
+				}
+				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], s.channels.at(joining[i]).topic));
+			//! c.AddToWriteBuffer(/*RPL_NAMREPLY*/);
+			}
+		}
+		#if DEBUG
+			std::cout << "JOIN: done"  << std::endl;
+		#endif
+	}
 }
 
 void Task::quit(Client &c, Server &s)
@@ -163,17 +235,38 @@ void Task::quit(Client &c, Server &s)
 	else
 		quit_message = args[0];
 	
+<<<<<<< HEAD
 	s.EraseClient(c);
+=======
+	s.EraseClient(c, "QUIT " + quit_message);
+>>>>>>> nick
 }
 
 void Task::run(Client &c, Server &s)
 {
-    if (cmd == "PING")
+	if (cmd == "CAP")
+		return;
+	if (cmd == "PASS")
+		pass(c, s);
+	else if (!c.validated)
+	{
+		#if DEBUG
+			std::cout << "ANY: not validated" << std::endl;
+		#endif
+		c.AddToWriteBuffer(ERR_NOTREGISTERED(c.nickname));
+	}
+    else if (cmd == "PING")
         ping(c);
+	else if (cmd == "JOIN")
+		join(c, s);
 	else if (cmd == "NICK")
 		nick(c, s);
-	else if (cmd == "PASS")
-		pass(c, s);
+	else if (cmd == "USERS")
+		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
+	else if (cmd == "SUMMON")
+		c.AddToWriteBuffer(ERR_SUMMONDISABLED(c.nickname));
+	else if (c.validated)
+		c.AddToWriteBuffer(ERR_UNKNOWNCOMMAND(c.nickname, cmd));
 }
 
 void Task::run(std::string fullCmd, Client &c, Server &s)

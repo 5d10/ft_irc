@@ -12,13 +12,15 @@ HEADS = ft_irc.hpp \
 		Server.hpp \
 		Client.hpp \
 		Channel.hpp \
-		Task.hpp
+		Task.hpp \
+		utils.hpp
 
 SRC = 	main.cpp \
 		Server.cpp \
 		Client.cpp \
 		Channel.cpp \
-		Task.cpp
+		Task.cpp \
+		utils.cpp
 
 OBJS = $(SRC:%.cpp=%.o)
 DEPS = $(SRC:%.cpp=%.d)

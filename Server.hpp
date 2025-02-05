@@ -23,15 +23,17 @@ class Server
     public:
         const char *const password;
         std::list<Client> clients;
-        std::map<std::string, const Client&> registered;
+        std::map<std::string, Client&> registered;
+        std::map<std::string, Channel> channels;
 
         Server(const char *const password) : password(password) { }
         int init(int port);
         void AddClient(int fd, short flags);
-		void EraseClient(Client client&);
+		void EraseClient(Client &client, std::string quit_message);
         void AcceptClient();
         int OnClientRead(size_t index);
         int OnClientSend(size_t index);
         int cycle();
+		void Rename(Client& client, std::string new_name);
 };
 #endif

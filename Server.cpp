@@ -74,6 +74,7 @@ void Server::DisconnectClient(size_t index)
 	clients.erase(it);
 }
 
+<<<<<<< HEAD
 void Server::EraseClient(Client client&)
 {
 	{//remove from Channels
@@ -81,6 +82,15 @@ void Server::EraseClient(Client client&)
 		for (std::map<std::string, Channel&>::iterator i = c.joined.begin(); i != end; ++i)
 		{
 			i->second.removeUser(c.nickname);
+=======
+void Server::EraseClient(Client &client, std::string quit_message)
+{
+	{//remove from Channels
+		const std::map<std::string, Channel&>::iterator end = client.joined.end();
+		for (std::map<std::string, Channel&>::iterator i = client.joined.begin(); i != end; ++i)
+		{
+			i->second.removeUser(client.nickname);
+>>>>>>> nick
 			i->second.broadcast(quit_message);
 		}
 	}
@@ -92,16 +102,29 @@ void Server::EraseClient(Client client&)
 	
 	while (it != end && it->nickname != client.nickname)
 	{
-		i += 1;
-		it += 1;
+		i++;
+		it++;
 	}
 	//! What if we DO reach end? Can that even happen?
 
-	close(pollfds[index].fd);//?wait, didn't we also have the fd stored in Client? if that is the case then we might put the close() on ~Client
+	close(pollfds[i].fd);//?wait, didn't we also have the fd stored in Client? if that is the case then we might put the close() on ~Client
 	pollfds.erase(pollfds.begin() + i);
 	registered.erase(client.nickname);
 	clients.erase(it);
 	//! I hope I haven't forgot anything
+	/*
+	Things this func does:
+	- For each channel:
+	  > Remove client from channel
+	  > Send quit msg to channel
+	- Find client in clients list and:
+	  > Close its fd
+	  > Remove it from the pollfds vector
+	  > Remove it from the list of registered clients
+	  > Remove it from the list of all clients
+	
+	Seems good to me ig
+	*/
 }
 
 void Server::AcceptClient()
@@ -197,7 +220,7 @@ int Server::OnClientRead(size_t index)
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
 					getClientAtIndex(i).AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
-					std::cout << "TEST: " << Channel("#chan1", "nick1").getUserList() << std::endl; // seems to be fine, nicks are appraently alphabetically ordered
+					std::cout << "TEST: " << Channel("#chan1", "nick1", registered).getUserList() << std::endl; // seems to be fine, nicks are appraently alphabetically ordered
 					// Task("JOIN #chan1\r");
 				}
 				else
@@ -387,4 +410,22 @@ Client &Server::getClientAtIndex(size_t index)
 	while (index--)
 		it++;
 	return *it;
+}
+
+void Server::Rename(Client& client, std::string new_name)
+{
+	std::string old_name = client.nickname;
+
+	client.nickname = new_name;
+	{
+		std::map<std::string, Channel>::iterator i = channels.begin();
+		std::map<std::string, Channel>::iterator end = channels.end();
+		while (i != end)
+		{
+			i->second.Rename(old_name, new_name);
+			++i;
+		}
+	}
+	registered.erase(old_name);
+	registered.insert(std::pair<std::string, Client&>(new_name, client));
 }

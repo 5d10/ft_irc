@@ -8,18 +8,21 @@
 class Channel
 {
     private:
+		//WHOOPS all public -glopez-m
+
+    public:
         std::string name;
         std::string password;
         bool isPasswordNeeded; // ?
         std::map<std::string, bool> isOperator; // doubles as client list (keys) and operator flags (values)
-        std::list<std::string> invitedUsers;
+        std::list<std::string> invitedUsers;//? could it be a map instead?
         bool isInviteOnly;
         std::string topic;
         bool isTopicCommandOpOnly;
         ssize_t userLimit;
-        std::map<std::string, const Client&>& clients;
-    public:
-        Channel(std::string channelName, std::string user);
+        std::map<std::string, Client&>& serverClients;
+
+        Channel(std::string channelName, std::string user, std::map<std::string, Client&>& client_direction);
         Channel(const Channel &other);
         Channel &operator=(const Channel &other);
         ~Channel();
@@ -28,8 +31,9 @@ class Channel
         std::string getUserList() const;
         void addUser(std::string name);
         void removeUser(std::string name);
-        void broadcast(std::string msg);
+        void broadcast(std::string msg) const;
         static bool isValidChannelName(std::string name);
+		void Rename(std::string old_name, std::string new_name);
 };
 
 #endif
