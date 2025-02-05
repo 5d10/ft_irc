@@ -3,7 +3,7 @@
 Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client&>& client_direction) : serverClients(client_direction)
 {
 	name = channelName;
-	isInviteOnly = channelName[0] == '&'; //! ?
+	isInviteOnly = false;//channelName[0] == '&'; //! ?
 	isOperator[user] = true;
 }
 
@@ -18,6 +18,7 @@ Channel::Channel(std::string channelName, std::string user, std::map<std::string
 	password = other.password;
 	isPasswordNeeded = other.isPasswordNeeded;
 	isOperator = other.isOperator;
+	isInviteOnly = other.isInviteOnly;
 	invitedUsers = other.invitedUsers;
 	topic = other.topic;
 	isTopicCommandOpOnly = other.isTopicCommandOpOnly;

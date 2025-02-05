@@ -197,6 +197,9 @@ void Task::join(Client &c, Server &s)
 			Channel* attempting = &(s.channels.at(joining[i]));
 			std::list<std::string>::iterator invitation = list_find(attempting->invitedUsers, c.nickname);
 
+			#if DEBUG
+				std::cout << "JOIN: isInviteOnly = " << attempting->isInviteOnly << std::endl;
+			#endif
 			if (attempting->userLimit && attempting->userLimit <= static_cast<ssize_t>(attempting->isOperator.size()))
 				c.AddToWriteBuffer(ERR_CHANNELISFULLL(c.nickname, joining[i]));
 			else if (attempting->isInviteOnly && invitation == attempting->invitedUsers.end())
