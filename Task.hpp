@@ -28,8 +28,10 @@ class Task
 {
     private:
         // enum e_types { UNKNOWN, PASS, NICK, USER, PING, JOIN, PRIVMSG, PART, QUIT, KICK, INVITE, TOPIC, MODE }; // might not even be necessary: if/else? map str to function? (one func per command type? no class, cut the middle man)
+        std::string prefix;
         std::string cmd;
         std::vector<std::string> args;
+
 
         void parse(std::string fullCmd);
         // e_types getType();
@@ -39,6 +41,7 @@ class Task
 		void nick(Client &c, Server &s);
         void quit(Client &c, Server &s);
 		void join(Client &c, Server &s);
+        void privmsg(Client &c, Server &s);
     public:
         Task();
         Task(std::string fullCmd);

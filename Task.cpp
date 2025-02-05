@@ -30,7 +30,18 @@ Task::~Task()
 
 void Task::parse(std::string fullCmd)
 {
+	//! "/ " dona segfault
     std::vector<std::string> split;
+	std::size_t lastArgStart = fullCmd.find(':');
+	std::string lastArg;
+
+	if (fullCmd[0] == ':')
+		prefix = fullCmd.substr(1, fullCmd.find(" "));
+	if (lastArgStart != std::string::npos) {
+		std::cout << "IM HEREEEEEE" << std::endl;
+		lastArg = fullCmd.substr(lastArgStart + 1);
+		fullCmd.erase(lastArgStart);
+	}
     while (fullCmd.size() > 0)
     {
         if (std::isspace(fullCmd[0]))//my brother in christ, we only want to care about ' '
@@ -50,8 +61,15 @@ void Task::parse(std::string fullCmd)
         }
     }
     cmd = split[0];
-    args.reserve(split.size());
-    args.insert(args.begin(), split.begin() + 1, split.end());
+	if (lastArgStart != std::string::npos)
+	{
+		args.reserve(split.size() + 1);
+  		args.insert(args.begin(), split.begin() + 1, split.end());
+		args.push_back(lastArg);
+	} else {
+		args.reserve(split.size());
+		args.insert(args.begin(), split.begin() + 1, split.end());
+	}
 	#if DEBUG
     std::cout << "COMMAND: " << cmd << std::endl;
     std::cout << "ARGS: " << std::endl;
@@ -235,11 +253,15 @@ void Task::quit(Client &c, Server &s)
 	else
 		quit_message = args[0];
 	
-<<<<<<< HEAD
-	s.EraseClient(c);
-=======
 	s.EraseClient(c, "QUIT " + quit_message);
->>>>>>> nick
+}
+
+void Task::privmsg(Client &c, Server &s)
+{
+	if (args.size() < 2) {
+	}
+	(void)c;
+	(void)s;
 }
 
 void Task::run(Client &c, Server &s)
