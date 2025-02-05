@@ -185,7 +185,7 @@ void Task::join(Client &c, Server &s)
 			//? RPL_NOTOPIC is not said to be a possible reply of JOIN, yet it exists for other commands.
 				//? Is it possible for complete servers to unset an hypothetical default topic to achive a non-topic?
 			c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
-			//! c.AddToWriteBuffer(/*RPL_NAMREPLY*/);
+			c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
 		}
 		else
 		{//the channel does exist
@@ -221,7 +221,7 @@ void Task::join(Client &c, Server &s)
 					attempting->invitedUsers.erase(invitation);
 				}
 				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], s.channels.at(joining[i]).topic));
-			//! c.AddToWriteBuffer(/*RPL_NAMREPLY*/);
+				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
 			}
 		}
 		#if DEBUG
@@ -230,6 +230,7 @@ void Task::join(Client &c, Server &s)
 	}
 }
 
+//! we crash when hexchat is closed with stablished connections, I don't know where tho
 void Task::quit(Client &c, Server &s)
 {
 	std::string quit_message;
