@@ -115,6 +115,9 @@ void Server::EraseClient(Client &client, std::string quit_message)
 	
 	Seems good to me ig
 	*/
+	#if DEBUG
+		std::cout << "SERVER: finished removing a client" << std::endl;
+	#endif
 }
 
 void Server::AcceptClient()

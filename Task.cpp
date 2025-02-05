@@ -234,8 +234,14 @@ void Task::quit(Client &c, Server &s)
 		quit_message = "[username] has left the chat"; //* We need to agree on a default message
 	else
 		quit_message = args[0];
-	
+
+	#if DEBUG
+		std::cout << "QUIT: message is `" << "QUIT " << quit_message << '\'' << std::endl;
+	#endif
 	s.EraseClient(c, "QUIT " + quit_message);
+	#if DEBUG
+		std::cout << "QUIT: success" << std::endl;
+	#endif
 }
 
 void Task::run(Client &c, Server &s)
@@ -257,6 +263,8 @@ void Task::run(Client &c, Server &s)
 		join(c, s);
 	else if (cmd == "NICK")
 		nick(c, s);
+	else if (cmd == "QUIT")
+		quit(c, s);
 	else if (cmd == "USERS")
 		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
 	else if (cmd == "SUMMON")
