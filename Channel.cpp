@@ -85,3 +85,27 @@ bool Channel::isValidChannelName(std::string name)
 			return false;
 	return true;
 }
+
+void Channel::Rename(std::string old_name, std::string new_name)
+{
+	if (isOperator.find(old_name) != isOperator.end())
+	{
+		bool temp = isOperator.at(old_name);
+		isOperator.erase(old_name);
+		isOperator.insert(std::pair<std::string, bool>(new_name, temp));
+	}
+	else
+	{
+		std::list<std::string>::iterator i = invitedUsers.begin();
+		std::list<std::string>::iterator end = invitedUsers.end();
+		while (i != end)
+		{
+			if (*i == old_name)
+			{
+				*i = new_name;
+				break;
+			}
+			++i;
+		}
+	}
+}

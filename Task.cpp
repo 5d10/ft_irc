@@ -148,7 +148,7 @@ void Task::nick(Client &c, Server &s)
 		}
 		++i;
 	}
-	c.nickname = args[0];
+	s.Rename(c, args[0]);
 	#if DEBUG
 		std::cout << "NICK: success" << std::endl;
 	#endif

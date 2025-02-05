@@ -401,3 +401,21 @@ Client &Server::getClientAtIndex(size_t index)
 		it++;
 	return *it;
 }
+
+void Server::Rename(Client& client, std::string new_name)
+{
+	std::string old_name = client.nickname;
+
+	client.nickname = new_name;
+	{
+		std::map<std::string, Channel>::iterator i = channels.begin();
+		std::map<std::string, Channel>::iterator end = channels.end();
+		while (i != end)
+		{
+			i->second.Rename(old_name, new_name);
+			++i;
+		}
+	}
+	registered.erase(old_name);
+	registered.insert(std::pair<std::string, Client&>(new_name, client));
+}

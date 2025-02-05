@@ -34,5 +34,6 @@ class Server
         int OnClientRead(size_t index);
         int OnClientSend(size_t index);
         int cycle();
+		void Rename(Client& client, std::string new_name);
 };
 #endif

@@ -33,6 +33,7 @@ class Channel
         void removeUser(std::string name);
         void broadcast(std::string msg) const;
         static bool isValidChannelName(std::string name);
+		void Rename(std::string old_name, std::string new_name);
 };
 
 #endif
