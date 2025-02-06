@@ -32,13 +32,10 @@ void Task::parse(std::string fullCmd)
 {
 	//! "/ " dona segfault
     std::vector<std::string> split;
-	std::size_t lastArgStart = fullCmd.find(':');
+	std::size_t lastArgStart = fullCmd.substr(1).find(':');
 	std::string lastArg;
 
-	if (fullCmd[0] == ':')
-		prefix = fullCmd.substr(1, fullCmd.find(" "));
 	if (lastArgStart != std::string::npos) {
-		std::cout << "IM HEREEEEEE" << std::endl;
 		lastArg = fullCmd.substr(lastArgStart + 1);
 		fullCmd.erase(lastArgStart);
 	}
