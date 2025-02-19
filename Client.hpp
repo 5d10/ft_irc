@@ -19,11 +19,17 @@ class Client
             this->fd = -1;
             rd_buff = "";
             wr_buff = "";
+			registered = false;
         }
 
     public:
-		bool validated;
+		bool registered;
+		bool passed;
+		bool nicked;
+		bool usernamed;
 		std::string nickname;
+		std::string username;
+		std::string realname;
         std::map<std::string, Channel&> joined;
 
         Client(int fd)
@@ -31,22 +37,30 @@ class Client
             this->fd = fd;
             rd_buff = "";
             wr_buff = "";
-			validated = false;
+			registered = false;
+			passed = false;
+			nicked = false;
+			usernamed = false;
         }
-		//why tf copy constructor?
         Client(const Client &other)
         {
             fd = other.fd;
             rd_buff = other.rd_buff;
             wr_buff = other.wr_buff;
-			validated = other.validated;
+			registered = other.registered;
+			passed = other.passed;
+			nicked = other.nicked;
+			usernamed = other.usernamed;
         }
         Client &operator=(const Client &other)
         {
             fd = other.fd;
             rd_buff = other.rd_buff;
             wr_buff = other.wr_buff;
-			validated = other.validated;
+			registered = other.registered;
+			passed = other.passed;
+			nicked = other.nicked;
+			usernamed = other.usernamed;
             return *this;
         }
         ~Client() {}

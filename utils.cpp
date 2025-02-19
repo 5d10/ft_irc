@@ -3,9 +3,7 @@
 
 //it would be nice if you added the capacity for it to treat things between quotes
 //	as a solid block IF told to do so i.e. bool argument
-//it would be nice if you added the capacity for it to treat many consecutive
-//	separators as one IF told to do so i.e. bool argument
-std::vector<std::string> string_split(const std::string &string, const char &separator)
+std::vector<std::string> string_split(const std::string &string, const char &separator, const unsigned char options /*default value in hpp*/)
 {
 	int	from;
 	int	until;
@@ -21,7 +19,10 @@ std::vector<std::string> string_split(const std::string &string, const char &sep
 	while (until != -1)
 	{
 		result.push_back(string.substr(from, until - from));
-		from = until + 1;
+		if (options & STRSPL_BUNDLE)
+			from = string.find_first_not_of(separator, until);
+		else
+			from = until + 1;
 		until = string.find(separator, from);
 	}
 	result.push_back(string.substr(from, -1));
