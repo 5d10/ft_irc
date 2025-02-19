@@ -36,7 +36,7 @@ void Task::parse(std::string fullCmd)
 	std::string lastArg;
 
 	if (lastArgStart != std::string::npos) {
-		lastArg = fullCmd.substr(lastArgStart + 1);
+		lastArg = fullCmd.substr(lastArgStart + 2);
 		fullCmd.erase(lastArgStart);
 	}
     while (fullCmd.size() > 0)
@@ -249,13 +249,36 @@ void Task::quit(Client &c, Server &s)
 		quit_message = "[username] has left the chat"; //* We need to agree on a default message
 	else
 		quit_message = args[0];
-	
 	s.EraseClient(c, "QUIT " + quit_message);
 }
 
+//*Numeric replies
+//* ERR_NORECIPIENT                 ERR_FILEERROR
+//* ERR_NOLOGIN                     ERR_NOSUCHSERVER
+//* RPL_SUMMONING
 void Task::privmsg(Client &c, Server &s)
 {
+	std::vector<std::string> clients;
 	if (args.size() < 2) {
+		//Not enough arguments, send error (?
+	}
+	if (args[0].find(',') == std::string::npos)
+	{
+		clients.push_back(args[0]);
+	} else {
+		size_t next_word = args[0].find(',');
+		while (next_word != std::string::npos)
+		{
+			//TEST,TEST,TEST
+			//    4
+			clients.push_back(args[0].substr(0, next_word));
+			args[0].erase(0, next_word);
+			next_word = args[0].find(',');
+		}
+	}
+	for (int i = 0; clients.size() - 1; i++)
+	{
+		std::cout << clients[i] << std::endl;
 	}
 	(void)c;
 	(void)s;
@@ -267,6 +290,9 @@ void Task::run(Client &c, Server &s)
 		return;
 	if (cmd == "PASS")
 		pass(c, s);
+	if (cmd == "PRIVMSG")
+		privmsg(c, s);
+
 	else if (!c.validated)
 	{
 		#if DEBUG
