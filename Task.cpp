@@ -253,35 +253,29 @@ void Task::quit(Client &c, Server &s)
 }
 
 //*Numeric replies
-//* ERR_NORECIPIENT                 ERR_FILEERROR
-//* ERR_NOLOGIN                     ERR_NOSUCHSERVER
-//* RPL_SUMMONING
+//*  ERR_NORECIPIENT                 ERR_NOTEXTTOSEND
+//*  ERR_CANNOTSENDTOCHAN            ERR_NOTOPLEVEL
+//*  ERR_WILDTOPLEVEL                ERR_TOOMANYTARGETS
+//*  ERR_NOSUCHNICK
+//*  RPL_AWAY
 void Task::privmsg(Client &c, Server &s)
 {
 	std::vector<std::string> clients;
 	if (args.size() < 2) {
-		//Not enough arguments, send error (?
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PRIVMSG"));
 	}
-	if (args[0].find(',') == std::string::npos)
+	clients = string_split(args[0], ',');
+	for (size_t i = 0; i < clients.size(); i++)
 	{
-		clients.push_back(args[0]);
-	} else {
-		size_t next_word = args[0].find(',');
-		while (next_word != std::string::npos)
+		if (s.registered.find(clients[i]) != s.registered.end())
 		{
-			//TEST,TEST,TEST
-			//    4
-			clients.push_back(args[0].substr(0, next_word));
-			args[0].erase(0, next_word);
-			next_word = args[0].find(',');
+			s.registered.at(clients[i]).AddToWriteBuffer(args[1]);
+		} else if (s.channels.find(clients[i]) != s.channels.end()) {
+			s.channels.at(clients[i]).broadcast(args[1]);
+		} else {
+			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, clients[i]));
 		}
 	}
-	for (int i = 0; clients.size() - 1; i++)
-	{
-		std::cout << clients[i] << std::endl;
-	}
-	(void)c;
-	(void)s;
 }
 
 void Task::run(Client &c, Server &s)
