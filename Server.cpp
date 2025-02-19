@@ -81,7 +81,7 @@ void Server::EraseClient(Client &client, std::string quit_message)
 		for (std::map<std::string, Channel&>::iterator i = client.joined.begin(); i != end; ++i)
 		{
 			i->second.removeUser(client.nickname);
-			i->second.broadcast(quit_message);
+			i->second.broadcast(quit_message);//? doesn't seem to reflect on client?
 		}
 	}
 
@@ -115,6 +115,9 @@ void Server::EraseClient(Client &client, std::string quit_message)
 	
 	Seems good to me ig
 	*/
+	#if DEBUG
+		std::cout << "SERVER: finished removing a client" << std::endl;
+	#endif
 }
 
 void Server::AcceptClient()
@@ -257,6 +260,8 @@ int Server::OnClientRead(size_t index)
 			else if (client.GetReadBuffer().size())//(client.GetReadBuffer().rfind("PING", 0) == 0)
 			{
 				Task::run(client.GetReadBuffer(), client, *this);
+				//! Issue: if the command was QUIT, these reads are invalid
+					//?Valgrind complains about them but no crash happens
 				if (client.GetWriteBuffer().size() > 0) // uhhhhhhh
 					pollfds[i].events |= POLLOUT;
 			}
