@@ -1,11 +1,12 @@
 #ifndef IRC_UTILS_HPP
 # define IRC_UTILS_HPP
 
-#include <vector>
-#include <string>
-#include <list>
+# include <vector>
+# include <string>
+# include <list>
 
-std::vector<std::string> string_split(const std::string &string, const char &separator);
+# define STRSPL_BUNDLE 1 //tells string_split to treat consecutive separators as one
+std::vector<std::string> string_split(const std::string &string, const char &separator, unsigned char options = 0);
 
 //template<class C>
 //typename std::list<C>::iterator list_find(std::list<C> list, C searched);
