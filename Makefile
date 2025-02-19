@@ -45,4 +45,4 @@ debug:
 	make DEBUG=TRUE
 
 run: $(NAME)
-	./$(NAME) 6667 ""
+	./$(NAME) 6667 "1234"
