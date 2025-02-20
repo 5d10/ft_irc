@@ -213,6 +213,7 @@ void Task::join(Client &c, Server &s)
 			//? RPL_NOTOPIC is not said to be a possible reply of JOIN, yet it exists for other commands.
 				//? Is it possible for complete servers to unset an hypothetical default topic to achive a non-topic?
 			// c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
+			c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i]);
 			c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 			c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
 		}
@@ -297,9 +298,9 @@ void Task::privmsg(Client &c, Server &s)
 	{
 		if (s.registered.find(clients[i]) != s.registered.end())
 		{
-			s.registered.at(clients[i]).AddToWriteBuffer(':' + c.nickname + " PRIVMSG " + clients[i]+ " :"+ args[1] + "\r\n");
+			s.registered.at(clients[i]).AddToWriteBuffer(":" + c.nickname + " PRIVMSG " + clients[i]+ " :"+ args[1] + "\r\n");
 		} else if (s.channels.find(clients[i]) != s.channels.end()) {
-			s.channels.at(clients[i]).broadcast(':' + c.nickname + " PRIVMSG " +clients[i] + " :" + args[1] + "\r\n");
+			s.channels.at(clients[i]).broadcast(":" + c.nickname + " PRIVMSG " +clients[i] + " :" + args[1] + "\r\n");
 		} else {
 			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, clients[i]));
 		}
