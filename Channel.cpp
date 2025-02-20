@@ -75,6 +75,20 @@ void Channel::broadcast(std::string msg) const
 	}
 }
 
+void Channel::broadcast(std::string msg, std::string sender) const
+{
+	std::map<std::string, Client&>::const_iterator i  = serverClients.begin();
+	std::map<std::string, Client&>::const_iterator end  = serverClients.end();
+
+	while (i != end)
+	{
+		if (i->first != sender)
+			serverClients.at(i->first).AddToWriteBuffer(msg);
+		++i;
+	}
+}
+
+
 bool Channel::isValidChannelName(std::string name)
 {
     if (name.size() < 2 || name.size() > 200)

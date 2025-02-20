@@ -51,8 +51,8 @@ class Task
         Task &operator=(const Task &other);
         ~Task();
 
-        void run(Client &c, Server &s);
-        static void run(std::string fullCmd, Client &c, Server &s);
+        bool run(Client &c, Server &s);
+        static bool run(std::string fullCmd, Client &c, Server &s);
 };
 
 #endif

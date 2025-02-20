@@ -61,7 +61,7 @@ void Server::AddClient(int fd, short flags)
 	poll_data.events = flags;
 	poll_data.revents = 0;//0 since this will get filled when poll() gets called
 	pollfds.push_back(poll_data);
-	clients.push_back(Client(fd));
+	clients.push_back(Client(fd/*, &(pollfds.back().events)*/));
 }
 
 void Server::DisconnectClient(size_t index)
@@ -89,14 +89,22 @@ void Server::EraseClient(Client &client, std::string quit_message)
 	unsigned int i = 0;
 	std::list<Client>::iterator it = clients.begin();
 	std::list<Client>::iterator end = clients.end();
-	
+
 	while (it != end && it->nickname != client.nickname)
-	{
+	{//search the client first
 		i++;
 		it++;
 	}
+	if (it == end)
+	{
+		#if DEBUG
+			std::cout << "YOU HAVE REACHED END OF CLIENTS LIST ON ERASE CLIENT\n"
+			<< "WHAT IN THE WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOORLD" << std::endl;
+		#endif
+		return;
+	}
 	//! What if we DO reach end? Can that even happen?
-
+	//then delete it
 	close(pollfds[i].fd);//?wait, didn't we also have the fd stored in Client? if that is the case then we might put the close() on ~Client
 	pollfds.erase(pollfds.begin() + i);
 	registered.erase(client.nickname);
@@ -173,17 +181,19 @@ bool IsValidChannelName(const std::string &name)
 
 int Server::OnClientRead(size_t index)
 {
-	Client &client = getClientAtIndex(index);
+	Client &client = getClientAtIndex(index); //* redundant, podriem enviar referencia directament
 	ssize_t bytes_read = client.Read();
 	if (!bytes_read)//consider checking for POLLHUP instead // https://stackoverflow.com/questions/74627334/no-pollhup-event-when-poll-on-tcp-socket-and-remote-closed
 	{
 		std::cout << "Client Disconnected" << std::endl;//DEBUG?
+		//! DisconnectClient might be outdated, EraseClient might be better option
 		DisconnectClient(index); // should we i-- after this? might be skipping over a client
 	}
 	else if (bytes_read < 0 && errno != EAGAIN && errno != EWOULDBLOCK) // can we use errno?
 	{
 		std::cerr << "error when reading from [" << index << "]" << std::endl; // std::cerr
-		perror("read" ); // perror
+		perror("read" ); //? perror
+		//! DisconnectClient might be outdated, EraseClient might be better option
 		DisconnectClient(index); // should we i-- after this? might be skipping over a client
 		// close(server_fd);
 		return (1);
@@ -198,75 +208,80 @@ int Server::OnClientRead(size_t index)
 			debug_print_hex(client.GetReadBuffer());
 			std::cout << std::endl;
 		}
-		for (size_t i = 0; i < clients.size(); i++)
+		// #if DEBUG
+		// for (size_t i = 0; i < clients.size(); i++)
+		// {
+		// 	if (i != index)
+		// 	{
+		// 		getClientAtIndex(i).AddToWriteBuffer("Message From Client: " + client.GetReadBuffer() + '\n');
+		// 		pollfds[i].events |= POLLOUT;
+		// 	}
+		// 	else if (client.GetReadBuffer() == "JOIN #chan1\r")
+		// 	{
+		// 		if (true)
+		// 		{
+		// 			getClientAtIndex(i).AddToWriteBuffer(":nick1!user@localhost JOIN :#chan1\r\n");
+		// 			getClientAtIndex(i).AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
+		// 			getClientAtIndex(i).AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
+		// 			getClientAtIndex(i).AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
+		// 			std::cout << "TEST: " << Channel("#chan1", "nick1", registered).getUserList() << std::endl; // seems to be fine, nicks are appraently alphabetically ordered
+		// 			// Task("JOIN #chan1\r");
+		// 		}
+		// 		else
+		// 		{
+		// 			getClientAtIndex(i).AddToWriteBuffer(":localhost 474 <client> #chan1 :Cannot join channel (+b)\r\n");
+		// 			// getClientAtIndex(i).AddToWriteBuffer(":localhost 475 <client> #chan1 :Cannot join channel (+k)\r\n");
+		// 			// getClientAtIndex(i).AddToWriteBuffer(":localhost 474 <client> #chan1\r\n");
+		// 			// getClientAtIndex(i).AddToWriteBuffer(":localhost 475 #chan1 :gkasgashjg\r\n");
+		// 		}
+		// 		pollfds[i].events |= POLLOUT;
+		// 	}
+		// 	else if (client.GetReadBuffer() == "USER user 0 * :realname\r") // https://datatracker.ietf.org/doc/html/rfc1459#section-8.5 read this fucker
+		// 	{
+		// 		// https://datatracker.ietf.org/doc/html/rfc1459#section-4.1.3 and this
+		// 		// username = user
+		// 		// hostname = 0
+		// 		// servername = *
+		// 		// realname = :realname
+
+		// 		/*
+		// 		[Client] Message received from client 4 << CAP LS 302
+
+		// 		[Client] Message received from client 4 << PASS server_pass
+		// 		NICK nick1
+		// 		USER user 0 * :realname
+		// 		[Server] Message sent to client 4       >> :localhost 464  :Password incorrect.
+		// 		[Server] Message sent to client 4       >> :nick1!@localhost NICK nick1
+		// 		*/
+
+
+		// 		// Copied Over From Another ft_irc
+		// 		getClientAtIndex(i).AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
+		// 		// getClientAtIndex(i).AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
+		// 		// getClientAtIndex(i).AddToWriteBuffer(":localhost 002 nick1 :Your host is 42_Ftirc (localhost), running version 1.1\r\n");
+		// 		// getClientAtIndex(i).AddToWriteBuffer(":localhost 003 nick1 :This server was created 15-01-2025 11:44:24\r\n");
+		// 		// getClientAtIndex(i).AddToWriteBuffer(":localhost 004 nick1 localhost 1.1 io kost k\r\n");
+		// 		// getClientAtIndex(i).AddToWriteBuffer(":localhost 005 nick1 CHANNELLEN=32 NICKLEN=9 TOPICLEN=307 :are supported by this server\r\n");
+				
+		// 		// Trigger For "Connection Complete!" Pop-Up On HexChat
+		// 		getClientAtIndex(i).AddToWriteBuffer(":localhost 376 nick1 :End of /MOTD command.\r\n");
+				
+		// 		pollfds[i].events |= POLLOUT;
+		// 	}
+		// 	else if (client.GetReadBuffer().size())//(client.GetReadBuffer().rfind("PING", 0) == 0)
+		// 	{
+				
+		// 	}
+		// }
+		// #endif
+		bool deleted = Task::run(client.GetReadBuffer(), client, *this);
+		if (!deleted)
 		{
-			if (i != index)
-			{
-				getClientAtIndex(i).AddToWriteBuffer("Message From Client: " + client.GetReadBuffer() + '\n');
-				pollfds[i].events |= POLLOUT;
-			}
-			else if (client.GetReadBuffer() == "JOIN #chan1\r")
-			{
-				if (true)
-				{
-					getClientAtIndex(i).AddToWriteBuffer(":nick1!user@localhost JOIN :#chan1\r\n");
-					getClientAtIndex(i).AddToWriteBuffer(":localhost 332 <client> #chan1 <topic>\r\n");
-					getClientAtIndex(i).AddToWriteBuffer(":localhost 353 user = #chan1 :@nick1\r\n");
-					getClientAtIndex(i).AddToWriteBuffer(":localhost 366 user #chan1 :End of /NAMES list.\r\n");
-					std::cout << "TEST: " << Channel("#chan1", "nick1", registered).getUserList() << std::endl; // seems to be fine, nicks are appraently alphabetically ordered
-					// Task("JOIN #chan1\r");
-				}
-				else
-				{
-					getClientAtIndex(i).AddToWriteBuffer(":localhost 474 <client> #chan1 :Cannot join channel (+b)\r\n");
-					// getClientAtIndex(i).AddToWriteBuffer(":localhost 475 <client> #chan1 :Cannot join channel (+k)\r\n");
-					// getClientAtIndex(i).AddToWriteBuffer(":localhost 474 <client> #chan1\r\n");
-					// getClientAtIndex(i).AddToWriteBuffer(":localhost 475 #chan1 :gkasgashjg\r\n");
-				}
-				pollfds[i].events |= POLLOUT;
-			}
-			else if (client.GetReadBuffer() == "USER user 0 * :realname\r") // https://datatracker.ietf.org/doc/html/rfc1459#section-8.5 read this fucker
-			{
-				// https://datatracker.ietf.org/doc/html/rfc1459#section-4.1.3 and this
-				// username = user
-				// hostname = 0
-				// servername = *
-				// realname = :realname
-
-				/*
-				[Client] Message received from client 4 << CAP LS 302
-
-				[Client] Message received from client 4 << PASS server_pass
-				NICK nick1
-				USER user 0 * :realname
-				[Server] Message sent to client 4       >> :localhost 464  :Password incorrect.
-				[Server] Message sent to client 4       >> :nick1!@localhost NICK nick1
-				*/
-
-
-				// Copied Over From Another ft_irc
-				getClientAtIndex(i).AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
-				// getClientAtIndex(i).AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
-				// getClientAtIndex(i).AddToWriteBuffer(":localhost 002 nick1 :Your host is 42_Ftirc (localhost), running version 1.1\r\n");
-				// getClientAtIndex(i).AddToWriteBuffer(":localhost 003 nick1 :This server was created 15-01-2025 11:44:24\r\n");
-				// getClientAtIndex(i).AddToWriteBuffer(":localhost 004 nick1 localhost 1.1 io kost k\r\n");
-				// getClientAtIndex(i).AddToWriteBuffer(":localhost 005 nick1 CHANNELLEN=32 NICKLEN=9 TOPICLEN=307 :are supported by this server\r\n");
-				
-				// Trigger For "Connection Complete!" Pop-Up On HexChat
-				getClientAtIndex(i).AddToWriteBuffer(":localhost 376 nick1 :End of /MOTD command.\r\n");
-				
-				pollfds[i].events |= POLLOUT;
-			}
-			else if (client.GetReadBuffer().size())//(client.GetReadBuffer().rfind("PING", 0) == 0)
-			{
-				Task::run(client.GetReadBuffer(), client, *this);
-				//! Issue: if the command was QUIT, these reads are invalid
-					//?Valgrind complains about them but no crash happens
-				if (client.GetWriteBuffer().size() > 0) // uhhhhhhh
-					pollfds[i].events |= POLLOUT;
-			}
+			if (client.GetWriteBuffer().size() > 0) // uhhhhhhh
+			pollfds[index].events |= POLLOUT;
+			client.ClearReadBuffer();
 		}
-		client.ClearReadBuffer();
+		else return(2);
 	}
 	return (0);
 }
@@ -274,6 +289,9 @@ int Server::OnClientRead(size_t index)
 int Server::OnClientSend(size_t index)
 {
 	Client &client = getClientAtIndex(index);
+	#if DEBUG
+		std::cout << "Sending to " << client.nickname << std::endl;
+	#endif
 	ssize_t out = client.Send();
 	if (out < 0 && errno != EAGAIN && errno != EWOULDBLOCK) // can we use errno?
 	{
@@ -299,13 +317,13 @@ int Server::cycle()
 	while (!signal_shutdown)
 	{
 		monit_size = pollfds.size();
-		pollret = poll(pollfds.data(), monit_size, 0 /*Timeout in ms, set to 0 so it's non-blocking ("If timeout is zero, then poll() will return without blocking.", Source: https://man.freebsd.org/cgi/man.cgi?poll)*/);
+		pollret = poll(pollfds.data(), monit_size, 0 /* Timeout in ms, set to 0 so it's non-blocking ("If timeout is zero, then poll() will return without blocking.", Source: https://man.freebsd.org/cgi/man.cgi?poll)*/);
 		if (pollret < 0 && errno != EINTR)
 		{
-			std::cerr << "Poll Errno: " << errno << std::endl; // cerr used
+			std::cerr << "Poll Errno: " << errno << std::endl; //? cerr used
 			return (-1);
 		}
-		for	(size_t i = 0; i < monit_size && pollret > 0; i++) // we're potentially adding / removing clients from the vector, careful about the index and where it ends
+		for	(size_t i = 0; i < monit_size && pollret > 0; i++) //! we're potentially adding / removing clients from the vector, careful about the index and where it ends
 		{
 			struct pollfd current = pollfds[i];
 			Client &client = getClientAtIndex(i);
@@ -365,11 +383,19 @@ int Server::cycle()
 						std::cout << "- POLLIN" << std::endl;
 					#endif
 					int out = OnClientRead(i);
-					if (out)
+					if (out == 1)
 						return out;
+					else if (out == 2) {
+						--pollret;
+						continue;
+					}
 				}
 				// Write (cutrisimo y asqueroso)
-				if (current.events & POLLOUT && client.GetWriteBuffer().length() > 0)
+				#if DEBUG
+					std::cout << (current.revents & current.events & POLLOUT)
+						<< ' ' << (client.GetWriteBuffer().length() > 0) << std::endl;
+				#endif
+				if (current.revents & current.events & POLLOUT && client.GetWriteBuffer().length() > 0)
 				{
 					int out = OnClientSend(i);
 					if (out)

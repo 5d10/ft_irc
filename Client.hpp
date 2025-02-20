@@ -13,7 +13,7 @@ class Client
         int fd;
         std::string rd_buff;
         std::string wr_buff;
-
+        //short *events;
         Client()
         {
             this->fd = -1;
@@ -32,15 +32,17 @@ class Client
 		std::string realname;
         std::map<std::string, Channel&> joined;
 
-        Client(int fd)
+        Client(int fd/*, short *events_ref*/)
         {
             this->fd = fd;
+            //events = events_ref;
             rd_buff = "";
             wr_buff = "";
 			registered = false;
 			passed = false;
 			nicked = false;
 			usernamed = false;
+            //events = NULL;
         }
         Client(const Client &other)
         {
@@ -51,6 +53,7 @@ class Client
 			passed = other.passed;
 			nicked = other.nicked;
 			usernamed = other.usernamed;
+            //events = other.events;
         }
         Client &operator=(const Client &other)
         {
@@ -61,6 +64,7 @@ class Client
 			passed = other.passed;
 			nicked = other.nicked;
 			usernamed = other.usernamed;
+           //events = other.events;
             return *this;
         }
         ~Client() {}
@@ -69,7 +73,10 @@ class Client
         std::string GetWriteBuffer() { return wr_buff; }
 
         void ClearReadBuffer() { rd_buff = ""; }
-        void AddToWriteBuffer(std::string msg) { wr_buff += msg; }
+        void AddToWriteBuffer(std::string msg)
+        {
+            //*events |= POLLOUT;
+            wr_buff += msg; }
 
         ssize_t Read();
         ssize_t Send();

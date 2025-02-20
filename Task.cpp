@@ -32,7 +32,7 @@ void Task::parse(std::string fullCmd)
 {
 	//! "/ " dona segfault
     std::vector<std::string> split;
-	std::size_t lastArgStart = fullCmd.substr(1).find(':');
+	std::size_t lastArgStart = fullCmd.find(" :");
 	std::string lastArg;
 
 	if (lastArgStart != std::string::npos) {
@@ -148,10 +148,14 @@ void Task::nick(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_NONICKNAMEGIVEN(c.nickname));
 		return;
 	}
+	//! this can be replaced with map.find()
 	std::list<Client>::iterator i = s.clients.begin();
 	const std::list<Client>::iterator end = s.clients.end();
 	while (i != end)
 	{
+		#if DEBUG
+			std::cout << 'i' << std::endl;
+		#endif
 		if (i->nickname == args[0])
 		{
 			#if DEBUG
@@ -167,7 +171,6 @@ void Task::nick(Client &c, Server &s)
 	#if DEBUG
 		std::cout << "NICK: success" << std::endl;
 	#endif
-	
 }
 
 void Task::user(Client &c)
@@ -213,9 +216,16 @@ void Task::join(Client &c, Server &s)
 			//? RPL_NOTOPIC is not said to be a possible reply of JOIN, yet it exists for other commands.
 				//? Is it possible for complete servers to unset an hypothetical default topic to achive a non-topic?
 			// c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
-			c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i]);
+			#if DEBUG
+				std::cout << "SENT REPLY:\n";
+				std::cout << (":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
+				std::cout << (RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
+				std::cout << (RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
+			#endif
+			c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
 			c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 			c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
+
 		}
 		else
 		{//the channel does exist
@@ -250,6 +260,7 @@ void Task::join(Client &c, Server &s)
 					#endif
 					attempting->invitedUsers.erase(invitation);
 				}
+				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
 				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], s.channels.at(joining[i]).topic));
 				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
 			}
@@ -260,7 +271,18 @@ void Task::join(Client &c, Server &s)
 	}
 }
 
-//! we crash when hexchat is closed with stablished connections, I don't know where tho
+
+/*
+:blvilarn JOIN :#patata
+:localhost 332 blvilarn #patata :TEST TOPIC
+:localhost 353 blvilarn #patata :@blvilarn
+
+:test1 JOIN :#pastanaga
+:localhost 332 test1 #pastanaga :TEST TOPIC
+:localhost 353 test1 #pastanaga :@test1
+
+*/
+
 void Task::quit(Client &c, Server &s)
 {
 	std::string quit_message;
@@ -286,6 +308,9 @@ void Task::quit(Client &c, Server &s)
 //*  RPL_AWAY
 void Task::privmsg(Client &c, Server &s)
 {
+	//! For some reason message, client X only recieves client Y message when client Y writes and viceversa
+	//! Also, the names on the message are switched for some reason
+
 	#if DEBUG
 		std::cout << "ENTERING PRIVMSG" << std::endl;
 	#endif
@@ -298,21 +323,31 @@ void Task::privmsg(Client &c, Server &s)
 	{
 		if (s.registered.find(clients[i]) != s.registered.end())
 		{
-			s.registered.at(clients[i]).AddToWriteBuffer(":" + c.nickname + " PRIVMSG " + clients[i]+ " :"+ args[1] + "\r\n");
-		} else if (s.channels.find(clients[i]) != s.channels.end()) {
-			s.channels.at(clients[i]).broadcast(":" + c.nickname + " PRIVMSG " +clients[i] + " :" + args[1] + "\r\n");
+			s.registered.at(clients[i]).AddToWriteBuffer(":" + c.nickname + " PRIVMSG " + clients[i] + " :"+ args[1] + "\r\n");
+			continue;
+		}
+		std::string temp = clients[i];
+		if (temp.find(":localhost") != std::string::npos)
+			temp.erase(temp.find(":localhost"));
+		if (s.channels.find(temp) != s.channels.end()) {
+			s.channels.at(temp).broadcast(":" + c.nickname + " PRIVMSG " + clients[i] + " :" + args[1] + "\r\n", c.nickname);
 		} else {
 			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, clients[i]));
 		}
 	}
 }
 
-void Task::run(Client &c, Server &s)
+bool Task::run(Client &c, Server &s)
 {
+	#if DEBUG
+		std::cout << "Task client: " << c.nickname << std::endl;
+	#endif
 	if (cmd == "CAP")
-		return;
-	if (cmd == "QUIT")
+		return (false);
+	if (cmd == "QUIT") {
 		quit(c, s);
+		return (true);
+	}
 	else if (cmd == "PASS") {
 		pass(c, s);
 	}
@@ -341,7 +376,7 @@ void Task::run(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_SUMMONDISABLED(c.nickname));
 	else if (c.registered)
 		c.AddToWriteBuffer(ERR_UNKNOWNCOMMAND(c.nickname, cmd));
-	return;
+	return (false);
 
 	validate:
 	if (!c.registered && c.passed && c.nicked && c.usernamed)
@@ -355,9 +390,10 @@ void Task::run(Client &c, Server &s)
 	else
 		std::cout << "Server: debug: client cannot be registered yet ("<< c.passed << c.nicked << c.usernamed  << ')' << std::endl;
 	#endif
+	return (false);
 }
 
-void Task::run(std::string fullCmd, Client &c, Server &s)
+bool Task::run(std::string fullCmd, Client &c, Server &s)
 {
-    Task(fullCmd).run(c, s);
+    return (Task(fullCmd).run(c, s));
 }
