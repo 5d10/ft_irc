@@ -5,7 +5,7 @@ CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic-errors
 
 ifeq ($(DEBUG), TRUE)
-	CFLAGS +=  -g
+	CFLAGS += -g -fsanitize=address
 endif
 
 HEADS = ft_irc.hpp \
@@ -44,5 +44,10 @@ re: fclean all
 debug:
 	make DEBUG=TRUE
 
+debug_run:
+	make run DEBUG=TRUE
+
 run: $(NAME)
 	./$(NAME) 6667 "1234"
+
+.PHONY all clean fclean re debug debug_run run

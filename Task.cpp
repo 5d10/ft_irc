@@ -323,7 +323,7 @@ void Task::privmsg(Client &c, Server &s)
 	{
 		if (s.registered.find(clients[i]) != s.registered.end())
 		{
-			s.registered.at(clients[i]).AddToWriteBuffer(":" + c.nickname + " PRIVMSG " + clients[i] + " :"+ args[1] + "\r\n");
+			s.registered.at(clients[i])->AddToWriteBuffer(":" + c.nickname + " PRIVMSG " + clients[i] + " :"+ args[1] + "\r\n");
 			continue;
 		}
 		std::string temp = clients[i];

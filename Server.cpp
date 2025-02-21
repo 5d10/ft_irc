@@ -77,11 +77,11 @@ void Server::DisconnectClient(size_t index)
 void Server::EraseClient(Client &client, std::string quit_message)
 {
 	{//remove from Channels
-		const std::map<std::string, Channel&>::iterator end = client.joined.end();
-		for (std::map<std::string, Channel&>::iterator i = client.joined.begin(); i != end; ++i)
+		const std::map<std::string, Channel *>::iterator end = client.joined.end();
+		for (std::map<std::string, Channel *>::iterator i = client.joined.begin(); i != end; ++i)
 		{
-			i->second.removeUser(client.nickname);
-			i->second.broadcast(quit_message);//? doesn't seem to reflect on client?
+			i->second->removeUser(client.nickname);
+			i->second->broadcast(quit_message);//? doesn't seem to reflect on client?
 		}
 	}
 
@@ -448,5 +448,5 @@ void Server::Rename(Client& client, std::string new_name)
 		}
 	}
 	registered.erase(old_name);
-	registered.insert(std::pair<std::string, Client&>(new_name, client));
+	registered.insert(std::pair<std::string, Client *>(new_name, &client));
 }

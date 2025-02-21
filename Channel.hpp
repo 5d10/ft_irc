@@ -20,9 +20,9 @@ class Channel
         std::string topic;
         bool isTopicCommandOpOnly;
         ssize_t userLimit;
-        std::map<std::string, Client&>& serverClients;
+        std::map<std::string, Client *>& serverClients;
 
-        Channel(std::string channelName, std::string user, std::map<std::string, Client&>& client_direction);
+        Channel(std::string channelName, std::string user, std::map<std::string, Client *>& client_direction);
         Channel(const Channel &other);
         Channel &operator=(const Channel &other);
         ~Channel();

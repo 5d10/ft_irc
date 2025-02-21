@@ -1,6 +1,6 @@
 #include "Channel.hpp"
 
-Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client&>& client_direction) : serverClients(client_direction)
+Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client *>& client_direction) : serverClients(client_direction)
 {
 	name = channelName;
 	isInviteOnly = false;//channelName[0] == '&'; //! ?
@@ -65,25 +65,25 @@ void Channel::removeUser(std::string name)
 
 void Channel::broadcast(std::string msg) const
 {
-	std::map<std::string, Client&>::const_iterator i  = serverClients.begin();
-	std::map<std::string, Client&>::const_iterator end  = serverClients.end();
+	std::map<std::string, Client *>::const_iterator i  = serverClients.begin();
+	std::map<std::string, Client *>::const_iterator end  = serverClients.end();
 
 	while (i != end)
 	{
-		serverClients.at(i->first).AddToWriteBuffer(msg);
+		serverClients.at(i->first)->AddToWriteBuffer(msg);
 		++i;
 	}
 }
 
 void Channel::broadcast(std::string msg, std::string sender) const
 {
-	std::map<std::string, Client&>::const_iterator i  = serverClients.begin();
-	std::map<std::string, Client&>::const_iterator end  = serverClients.end();
+	std::map<std::string, Client *>::const_iterator i  = serverClients.begin();
+	std::map<std::string, Client *>::const_iterator end  = serverClients.end();
 
 	while (i != end)
 	{
 		if (i->first != sender)
-			serverClients.at(i->first).AddToWriteBuffer(msg);
+			serverClients.at(i->first)->AddToWriteBuffer(msg);
 		++i;
 	}
 }

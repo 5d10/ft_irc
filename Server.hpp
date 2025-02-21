@@ -23,7 +23,7 @@ class Server
     public:
         const char *const password;
         std::list<Client> clients;
-        std::map<std::string, Client&> registered;
+        std::map<std::string, Client *> registered;
         std::map<std::string, Channel> channels;
 
         Server(const char *const password) : password(password) { }
