@@ -50,4 +50,4 @@ debug_run:
 run: $(NAME)
 	./$(NAME) 6667 "1234"
 
-.PHONY all clean fclean re debug debug_run run
+.PHONY: all clean fclean re debug debug_run run
