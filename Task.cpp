@@ -239,14 +239,19 @@ void Task::join(Client &c, Server &s)
 
 			#if DEBUG
 				std::cout << "JOIN: isInviteOnly = " << attempting->isInviteOnly << std::endl;
+				std::cout << "JOIN: userLimit = " << attempting->userLimit << std::endl;
+				std::cout << "JOIN: userCount = " << static_cast<ssize_t>(attempting->isOperator.size()) << std::endl;
+				std::cout << "JOIN: pwdNeeded = " << attempting->isPasswordNeeded << std::endl;
+				std::cout << "JOIN: givenPwds = " << passwords.size() << std::endl;
+				std::cout << "JOIN: hasInorrectPwd = " << (passwords.size() <= i || passwords[i] != attempting->password) << std::endl;
 			#endif
 			if (attempting->userLimit && attempting->userLimit <= static_cast<ssize_t>(attempting->isOperator.size()))
 				c.AddToWriteBuffer(ERR_CHANNELISFULLL(c.nickname, joining[i]));
 			else if (attempting->isInviteOnly && invitation == attempting->invitedUsers.end())
 				c.AddToWriteBuffer(ERR_INVITEONLYCHAN(c.nickname, joining[i]));
 			//subject does not require us for bans
-			else if (attempting->isPasswordNeeded && (passwords.size() < i || passwords[i] != attempting->password))
-				c.AddToWriteBuffer(ERR_BADCHANNELKEY(c.nickname, joining[i]));
+			// else if (attempting->isPasswordNeeded && (passwords.size() <= i || passwords[i] != attempting->password))
+			// 	c.AddToWriteBuffer(ERR_BADCHANNELKEY(c.nickname, joining[i]));
 			else
 			{//join in
 				#if DEBUG
@@ -261,8 +266,16 @@ void Task::join(Client &c, Server &s)
 					attempting->invitedUsers.erase(invitation);
 				}
 				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
-				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], s.channels.at(joining[i]).topic));
+				// c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], s.channels.at(joining[i]).topic));
+				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
+				/*
+				Reply when creating channel (works correctly):
+
+				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
+				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
+				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
+				*/
 			}
 		}
 		#if DEBUG
@@ -385,6 +398,7 @@ bool Task::run(Client &c, Server &s)
 			std::cout << "Server: debug: client registered" << std::endl;
 		#endif
 		c.registered= true;
+		c.AddToWriteBuffer(":localhost 376 " + c.nickname + " :End of /MOTD command.\r\n");
 	}
 	#if DEBUG
 	else
