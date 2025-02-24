@@ -212,7 +212,6 @@ void Task::join(Client &c, Server &s)
 				std::cout << "JOIN: creating channel " << joining[i] << std::endl;
 			#endif
 			s.channels.insert(std::pair<std::string, Channel>(joining[i], Channel(joining[i], c.nickname, s.registered)));//! make sure the default constructor initializaes everything to 0
-			//s.channels[joining[i]].isOperator[c.nickname] = true;
 			//? RPL_NOTOPIC is not said to be a possible reply of JOIN, yet it exists for other commands.
 				//? Is it possible for complete servers to unset an hypothetical default topic to achive a non-topic?
 			// c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
@@ -251,7 +250,6 @@ void Task::join(Client &c, Server &s)
 				c.AddToWriteBuffer(ERR_CHANNELISFULLL(c.nickname, joining[i]));
 			else if (attempting->isInviteOnly && invitation == attempting->invitedUsers.end())
 				c.AddToWriteBuffer(ERR_INVITEONLYCHAN(c.nickname, joining[i]));
-			//			need pwd				  && ( no pwd given 	   || pwd doesn't match)
 			else if (attempting->isPasswordNeeded && (passwords.size() <= i || passwords[i] != attempting->password))
 			{
 				#if DEBUG
@@ -272,17 +270,24 @@ void Task::join(Client &c, Server &s)
 					#endif
 					attempting->invitedUsers.erase(invitation);
 				}
+				#if DEBUG
+					std::cout << "SENT REPLY:\n";
+					std::cout << (":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
+					std::cout << (RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
+					std::cout << (RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
+				#endif
+				/*
 				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
 				// c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], s.channels.at(joining[i]).topic));
 				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
-				/*
-				Reply when creating channel (works correctly):
+				*/
+				//Reply when creating channel (works correctly):
 
 				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
 				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
-				*/
+				
 			}
 		}
 		#if DEBUG

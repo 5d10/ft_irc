@@ -45,11 +45,11 @@ std::string Channel::getUserList() const
 	while (it != isOperator.end())
 	{
 		if (it->second)
-			s += "@";
+			s += '@';
 		s += it->first;
 		it++;
 		if (it != isOperator.end())
-			s += ",";
+			s += ' ';
 	}
 	return s;
 }
