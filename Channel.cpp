@@ -5,6 +5,7 @@ Channel::Channel(std::string channelName, std::string user, std::map<std::string
 	name = channelName;
 	isInviteOnly = false;//channelName[0] == '&'; //! ?
 	isOperator[user] = true;
+	isPasswordNeeded = false;
 }
 
  Channel::Channel(const Channel &other): serverClients(other.serverClients)

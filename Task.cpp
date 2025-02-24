@@ -243,15 +243,22 @@ void Task::join(Client &c, Server &s)
 				std::cout << "JOIN: userCount = " << static_cast<ssize_t>(attempting->isOperator.size()) << std::endl;
 				std::cout << "JOIN: pwdNeeded = " << attempting->isPasswordNeeded << std::endl;
 				std::cout << "JOIN: givenPwds = " << passwords.size() << std::endl;
+				std::cout << "JOIN: isPasswordNeeded = " << attempting->isPasswordNeeded << std::endl;
 				std::cout << "JOIN: hasInorrectPwd = " << (passwords.size() <= i || passwords[i] != attempting->password) << std::endl;
 			#endif
+			//subject does not require us for bans
 			if (attempting->userLimit && attempting->userLimit <= static_cast<ssize_t>(attempting->isOperator.size()))
 				c.AddToWriteBuffer(ERR_CHANNELISFULLL(c.nickname, joining[i]));
 			else if (attempting->isInviteOnly && invitation == attempting->invitedUsers.end())
 				c.AddToWriteBuffer(ERR_INVITEONLYCHAN(c.nickname, joining[i]));
-			//subject does not require us for bans
-			// else if (attempting->isPasswordNeeded && (passwords.size() <= i || passwords[i] != attempting->password))
-			// 	c.AddToWriteBuffer(ERR_BADCHANNELKEY(c.nickname, joining[i]));
+			//			need pwd				  && ( no pwd given 	   || pwd doesn't match)
+			else if (attempting->isPasswordNeeded && (passwords.size() <= i || passwords[i] != attempting->password))
+			{
+				#if DEBUG
+					std::cout << "JOIN: Sending BADCHANNELKEY" << std::endl;
+				#endif
+			 	c.AddToWriteBuffer(ERR_BADCHANNELKEY(c.nickname, joining[i]));
+			}
 			else
 			{//join in
 				#if DEBUG
