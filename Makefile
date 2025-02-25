@@ -20,7 +20,7 @@ SRC = 	main.cpp \
 		Client.cpp \
 		Channel.cpp \
 		Task.cpp \
-		utils.cpp
+		utils.cpp\
 
 OBJS = $(SRC:%.cpp=%.o)
 DEPS = $(SRC:%.cpp=%.d)

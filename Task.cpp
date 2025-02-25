@@ -153,9 +153,6 @@ void Task::nick(Client &c, Server &s)
 	const std::list<Client>::iterator end = s.clients.end();
 	while (i != end)
 	{
-		#if DEBUG
-			std::cout << 'i' << std::endl;
-		#endif
 		if (i->nickname == args[0])
 		{
 			#if DEBUG
@@ -287,7 +284,7 @@ void Task::join(Client &c, Server &s)
 				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
 				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
-				
+				c.AddToWriteBuffer(RPL_ENDOFNAMES(c.nickname, joining[i]));
 			}
 		}
 		#if DEBUG
@@ -411,6 +408,22 @@ bool Task::run(Client &c, Server &s)
 		#endif
 		c.registered= true;
 		c.AddToWriteBuffer(":localhost 376 " + c.nickname + " :End of /MOTD command.\r\n");
+		
+	// doesn't fix what I'm trying to fix
+	//	if (s.clients.size() == 2)
+	//	{
+	//		c.AddToWriteBuffer(RPL_LUSERCLIENT(c.nickname, "1"));
+	//		c.AddToWriteBuffer(RPL_LUSRME(c.nickname, "1"));
+	//	}
+	//	else if (s.clients.size() == 3)
+	//	{
+	//		c.AddToWriteBuffer(RPL_LUSERCLIENT(c.nickname, "2"));
+	//		c.AddToWriteBuffer(RPL_LUSRME(c.nickname, "2"));
+	//	}
+		//c.AddToWriteBuffer(RPL_LUSERCLIENT(c.nickname, ft_itoa(s.clients.size())));
+		//c.AddToWriteBuffer(RPL_LUSRME(c.nickname, ft_itoa(s.clients.size())));
+	//	c.AddToWriteBuffer(MSG_NICK(c.nickname));
+	//	c.AddToWriteBuffer(MSG_USER(c.username, c.realname));
 	}
 	#if DEBUG
 	else
