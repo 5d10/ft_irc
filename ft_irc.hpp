@@ -17,5 +17,6 @@
 # include <cctype>
 # include <sys/time.h> // ping(?
 # include "utils.hpp"
+# include "Colors.h"
 
 #endif

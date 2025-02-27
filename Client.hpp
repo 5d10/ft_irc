@@ -5,8 +5,6 @@
 
 class Channel;
 
-// TODO: MOVE CODE TO CPP FILE FFS
-
 class Client
 {
     private:
@@ -14,13 +12,9 @@ class Client
         std::string rd_buff;
         std::string wr_buff;
         //short *events;
-        Client()
-        {
-            this->fd = -1;
-            rd_buff = "";
-            wr_buff = "";
-			registered = false;
-        }
+        Client();
+        std::string format_buffer(std::string buffer) const;
+        void print_buffer(std::string buffer) const;
 
     public:
 		bool registered;
@@ -32,53 +26,19 @@ class Client
 		std::string realname;
         std::map<std::string, Channel *> joined;
 
-        Client(int fd/*, short *events_ref*/)
-        {
-            this->fd = fd;
-            //events = events_ref;
-            rd_buff = "";
-            wr_buff = "";
-			registered = false;
-			passed = false;
-			nicked = false;
-			usernamed = false;
-            //events = NULL;
-        }
-        Client(const Client &other)
-        {
-            fd = other.fd;
-            rd_buff = other.rd_buff;
-            wr_buff = other.wr_buff;
-			registered = other.registered;
-			passed = other.passed;
-			nicked = other.nicked;
-			usernamed = other.usernamed;
-            //events = other.events;
-        }
-        Client &operator=(const Client &other)
-        {
-            fd = other.fd;
-            rd_buff = other.rd_buff;
-            wr_buff = other.wr_buff;
-			registered = other.registered;
-			passed = other.passed;
-			nicked = other.nicked;
-			usernamed = other.usernamed;
-           //events = other.events;
-            return *this;
-        }
-        ~Client() {}
-        int GetFD() { return fd; }
-        std::string GetReadBuffer() { return rd_buff; }
-        std::string GetWriteBuffer() { return wr_buff; }
+        Client(int fd/*, short *events_ref*/);
+        Client(const Client &other);
+        Client &operator=(const Client &other);
+        ~Client();
+        const int &GetFD() const;
+        const std::string &GetReadBuffer() const;
+        const std::string &GetWriteBuffer() const;
 
-        void ClearReadBuffer() { rd_buff = ""; }
-        void AddToWriteBuffer(std::string msg)
-        {
-            //*events |= POLLOUT;
-            wr_buff += msg; }
+        void ClearReadBuffer();
+        void AddToWriteBuffer(std::string msg);
 
         ssize_t Read();
         ssize_t Send();
 };
+
 #endif
