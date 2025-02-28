@@ -200,6 +200,7 @@ int Server::OnClientRead(size_t index)
 	}
 	else if (bytes_read > 0)
 	{
+		/*
 		if (debug_is_printable_str(client.GetReadBuffer()))
 			std::cout << "Received message: " << client.GetReadBuffer() << std::endl;
 		else
@@ -208,6 +209,7 @@ int Server::OnClientRead(size_t index)
 			debug_print_hex(client.GetReadBuffer());
 			std::cout << std::endl;
 		}
+		*/
 		// #if DEBUG
 		// for (size_t i = 0; i < clients.size(); i++)
 		// {

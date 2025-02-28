@@ -100,14 +100,14 @@ std::string Client::format_buffer(std::string buffer) const
 
 void Client::print_buffer(std::string buffer) const
 {
-	std::cout << COLOR_CYAN << "Buffer data: " << COLOR_NONE << "'" << format_buffer(buffer) << "'" << COLOR_NONE << std::endl;
+	std::cout << COLOR_PINK << "Buffer data: " << COLOR_NONE << "'" << format_buffer(buffer) << "'" << COLOR_NONE << std::endl;
 }
 
 ssize_t Client::Read()
 {
 	char buffer[1];
 	ssize_t bytes_read = recv(fd, buffer, sizeof(buffer), MSG_DONTWAIT);
-	while (bytes_read > 0 && buffer[bytes_read - 1] != '\n')
+	while (bytes_read > 0 && buffer[0] != '\n')
 	{
 		rd_buff += buffer[0];
 		bytes_read = recv(fd, buffer, sizeof(buffer), MSG_DONTWAIT); // this can block? (nc -C + Ctrl-D) // is client socket non-blocking?
@@ -120,7 +120,7 @@ ssize_t Client::Read()
 
 ssize_t Client::Send()
 {
-	std::cout << COLOR_PINK << "[SERVER] >> Write on FD " << fd << COLOR_NONE << std::endl;
+	std::cout << COLOR_CYAN << "[SERVER] >> Write on FD " << fd << COLOR_NONE << std::endl;
 	print_buffer(wr_buff);
 	char buffer[1];
 	buffer[0] = wr_buff.c_str()[0];
@@ -137,7 +137,7 @@ ssize_t Client::Send()
 	}
 	if (wr_buff.length() > 0)
 	{
-		std::cout << "WARNING: Buffer not empty after write on FD " << fd << "!" << std::endl;
+		std::cout << COLOR_RED << "WARNING: Buffer not empty after write on FD " << fd << "!" << COLOR_NONE << std::endl;
 		print_buffer(wr_buff);
 	}
 	return out;

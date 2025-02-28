@@ -19,4 +19,6 @@
 # include "utils.hpp"
 # include "Colors.h"
 
+# define DEBUG 0
+
 #endif

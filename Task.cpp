@@ -70,9 +70,9 @@ void Task::parse(std::string fullCmd)
 	#if DEBUG
     std::cout << "COMMAND: " << cmd << std::endl;
     std::cout << "ARGS: " << std::endl;
-	#endif
     for (unsigned int i = 0; i < args.size(); i++)
         std::cout << "- " << args[i] << std::endl;
+	#endif
 }
 
 void Task::ping(Client &c)
@@ -407,6 +407,16 @@ bool Task::run(Client &c, Server &s)
 			std::cout << "Server: debug: client registered" << std::endl;
 		#endif
 		c.registered= true;
+		/*
+		getClientAtIndex(i).AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
+		getClientAtIndex(i).AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
+		getClientAtIndex(i).AddToWriteBuffer(":localhost 002 nick1 :Your host is 42_Ftirc (localhost), running version 1.1\r\n");
+		getClientAtIndex(i).AddToWriteBuffer(":localhost 003 nick1 :This server was created 15-01-2025 11:44:24\r\n");
+		getClientAtIndex(i).AddToWriteBuffer(":localhost 004 nick1 localhost 1.1 io kost k\r\n");
+		getClientAtIndex(i).AddToWriteBuffer(":localhost 005 nick1 CHANNELLEN=32 NICKLEN=9 TOPICLEN=307 :are supported by this server\r\n");
+		*/
+		// c.AddToWriteBuffer(":" + c.nickname + "!@localhost NICK " + c.nickname + "\r\n"); // not necessary for correct nick registration
+		c.AddToWriteBuffer(":localhost 001 " + c.nickname + " :Welcome to the Internet Relay Network :" + c.nickname + "!" + c.username + "@localhost\r\n");
 		c.AddToWriteBuffer(":localhost 376 " + c.nickname + " :End of /MOTD command.\r\n");
 		
 	// doesn't fix what I'm trying to fix

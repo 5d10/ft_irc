@@ -11,6 +11,11 @@ void signalTriggered(int signal)
 
 int main (int argc, char** argv)
 {
+
+#if DEBUG
+	std::cout << "Debug Flag Active!" << std::endl;
+#endif
+
 	if (argc != 3)
 	{
 		std::cout << "Incorrect amount of arguments (expected 2, given " << argc - 1 << ")" << std::endl;
