@@ -407,7 +407,10 @@ bool Task::run(Client &c, Server &s)
 			std::cout << "Server: debug: client registered" << std::endl;
 		#endif
 		c.registered= true;
+
 		/*
+		Taken from another ft_irc as reference, these happen when registration finishes
+
 		getClientAtIndex(i).AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
 		getClientAtIndex(i).AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
 		getClientAtIndex(i).AddToWriteBuffer(":localhost 002 nick1 :Your host is 42_Ftirc (localhost), running version 1.1\r\n");
@@ -415,6 +418,7 @@ bool Task::run(Client &c, Server &s)
 		getClientAtIndex(i).AddToWriteBuffer(":localhost 004 nick1 localhost 1.1 io kost k\r\n");
 		getClientAtIndex(i).AddToWriteBuffer(":localhost 005 nick1 CHANNELLEN=32 NICKLEN=9 TOPICLEN=307 :are supported by this server\r\n");
 		*/
+	
 		// c.AddToWriteBuffer(":" + c.nickname + "!@localhost NICK " + c.nickname + "\r\n"); // not necessary for correct nick registration
 		c.AddToWriteBuffer(":localhost 001 " + c.nickname + " :Welcome to the Internet Relay Network :" + c.nickname + "!" + c.username + "@localhost\r\n");
 		c.AddToWriteBuffer(":localhost 376 " + c.nickname + " :End of /MOTD command.\r\n");
