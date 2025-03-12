@@ -112,6 +112,8 @@ ssize_t Client::Read()
 		rd_buff += buffer[0];
 		bytes_read = recv(fd, buffer, sizeof(buffer), MSG_DONTWAIT); // this can block? (nc -C + Ctrl-D) // is client socket non-blocking?
 	}
+	if (bytes_read <= 0)
+		buffer[0] = 0;
 	rd_buff += buffer[0];
 	std::cout << COLOR_YELLOW << "[SERVER] << Read of FD " << fd << COLOR_NONE << std::endl;
 	print_buffer(rd_buff);
