@@ -113,14 +113,14 @@ ssize_t Client::Read()
 		bytes_read = recv(fd, buffer, sizeof(buffer), MSG_DONTWAIT); // this can block? (nc -C + Ctrl-D) // is client socket non-blocking?
 	}
 	rd_buff += buffer[0];
-	std::cout << COLOR_YELLOW << "[SERVER] << Read on FD " << fd << COLOR_NONE << std::endl;
+	std::cout << COLOR_YELLOW << "[SERVER] << Read of FD " << fd << COLOR_NONE << std::endl;
 	print_buffer(rd_buff);
 	return bytes_read;
 }
 
 ssize_t Client::Send()
 {
-	std::cout << COLOR_CYAN << "[SERVER] >> Write on FD " << fd << COLOR_NONE << std::endl;
+	std::cout << COLOR_CYAN << "[SERVER] >> Write to FD " << fd << COLOR_NONE << std::endl;
 	print_buffer(wr_buff);
 	char buffer[1];
 	buffer[0] = wr_buff.c_str()[0];
@@ -137,7 +137,7 @@ ssize_t Client::Send()
 	}
 	if (wr_buff.length() > 0)
 	{
-		std::cout << COLOR_RED << "WARNING: Buffer not empty after write on FD " << fd << "!" << COLOR_NONE << std::endl;
+		std::cout << COLOR_RED << "WARNING: Buffer not empty after write to FD " << fd << "!" << COLOR_NONE << std::endl;
 		print_buffer(wr_buff);
 	}
 	return out;

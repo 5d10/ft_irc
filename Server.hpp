@@ -18,6 +18,7 @@ class Server
         int initialize_listener(const int port);
         Client &getClientAtIndex(size_t index);
         void DisconnectClient(size_t index);//*use EraseClient instead
+        void SetClientPolloutFlags();
     public:
         const char *const password;
         std::list<Client> clients;

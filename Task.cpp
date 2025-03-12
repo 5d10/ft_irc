@@ -336,25 +336,25 @@ void Task::privmsg(Client &c, Server &s)
 	#if DEBUG
 		std::cout << "ENTERING PRIVMSG" << std::endl;
 	#endif
-	std::vector<std::string> clients;
+	std::vector<std::string> targets;
 	if (args.size() < 2) {
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PRIVMSG"));
 	}
-	clients = string_split(args[0], ',');
-	for (size_t i = 0; i < clients.size(); i++)
+	targets = string_split(args[0], ',');
+	for (size_t i = 0; i < targets.size(); i++)
 	{
-		if (s.registered.find(clients[i]) != s.registered.end())
+		if (s.registered.find(targets[i]) != s.registered.end())
 		{
-			s.registered.at(clients[i])->AddToWriteBuffer(":" + c.nickname + " PRIVMSG " + clients[i] + " :"+ args[1] + "\r\n");
+			s.registered.at(targets[i])->AddToWriteBuffer(":" + c.nickname + " PRIVMSG " + targets[i] + " :"+ args[1] + "\r\n");
 			continue;
 		}
-		std::string temp = clients[i];
+		std::string temp = targets[i];
 		if (temp.find(":localhost") != std::string::npos)
 			temp.erase(temp.find(":localhost"));
 		if (s.channels.find(temp) != s.channels.end()) {
-			s.channels.at(temp).broadcast(":" + c.nickname + " PRIVMSG " + clients[i] + " :" + args[1] + "\r\n", c.nickname);
+			s.channels.at(temp).broadcast(":" + c.nickname + " PRIVMSG " + targets[i] + " :" + args[1] + "\r\n", c.nickname);
 		} else {
-			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, clients[i]));
+			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, targets[i]));
 		}
 	}
 }

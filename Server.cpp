@@ -416,6 +416,7 @@ int Server::cycle()
 			current.revents = 0; // do we need to do this? //we need to reset it, right?
 			pollret--;
 		}
+		SetClientPolloutFlags();
 	}
 	std::cout << "Shutting down server..." << std::endl;
 	std::cout << pollfds.size() << std::endl;
@@ -425,6 +426,16 @@ int Server::cycle()
 		DisconnectClient(i);
 	}
 	return (0);//in case we want to return errors
+}
+
+// fuck i hate this but it works
+void Server::SetClientPolloutFlags()
+{
+	size_t i;
+	std::list<Client>::iterator it;
+	for (i = 0, it = clients.begin(); i < pollfds.size() && it != clients.end(); i++, it++)
+		if (!it->GetWriteBuffer().empty())
+				pollfds[i].events |= POLLOUT;
 }
 
 Client &Server::getClientAtIndex(size_t index)
