@@ -359,6 +359,43 @@ void Task::privmsg(Client &c, Server &s)
 	}
 }
 
+void Task::kick(Client &c, Server &s)
+{ 
+	if (args.size() < 2) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "KICK"));
+		return;
+	}
+	std::vector<std::string> channels = string_split(args[0], ',', STRSPL_BUNDLE);
+	std::vector<std::string> targets = string_split(args[1], ',', STRSPL_BUNDLE);
+	for (std::vector<std::string>::iterator i = channels.begin(), c_end = channels.end();
+		i != c_end; ++i)
+	{
+		std::map<std::string, Channel>::iterator ch_search = s.channels.find(*i);
+		if (ch_search == s.channels.end()) {
+			c.AddToWriteBuffer(ERR_NOSUCHCHANNEL(c.nickname, *i));
+			continue;
+		}
+		std::map<std::string, bool>::iterator user_search = ch_search->second.isOperator.find(c.nickname);
+		if (user_search == ch_search->second.isOperator.end()) {
+			c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, ch_search->first));
+			continue;
+		}
+		if (!user_search->second) {
+			c.AddToWriteBuffer(ERR_CHANOPRIVSNEEDED(c.nickname, ch_search->first));
+			continue;
+		}
+		for (std::vector<std::string>::iterator j = targets.begin(), t_end = channels.end();
+				j != t_end; ++j)
+		{
+			std::map<std::string, Client*>::iterator target_search = ch_search->second.serverClients.find(*j);
+			if (target_search  == ch_search->second.serverClients.end())
+				continue;
+			//target_search.second->AddToWriteBuffer(/* FILL THIS */);
+			ch_search->second.removeUser(*j);
+		}
+	}
+}
+
 bool Task::run(Client &c, Server &s)
 {
 	#if DEBUG
@@ -392,6 +429,8 @@ bool Task::run(Client &c, Server &s)
 		join(c, s);
 	else if (cmd == "PRIVMSG")
 		privmsg(c, s);
+	else if (cmd == "KICK")
+		kick(c, s);
 	else if (cmd == "USERS")
 		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
 	else if (cmd == "SUMMON")

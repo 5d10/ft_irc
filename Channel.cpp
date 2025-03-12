@@ -62,6 +62,13 @@ void Channel::addUser(std::string name)
 void Channel::removeUser(std::string name)
 {
 	isOperator.erase(name);
+	serverClients.erase(name);
+	//* would be nice if erasure from invitedUsers was done as well
+	/*
+		imagine you are a channop and you want to invite someone to your invite only chan,
+		then you invite the wrong person, but it doesn't join in right away,
+		you might want to remove said person from the invited list since they aren't on the channel.
+	*/
 }
 
 void Channel::broadcast(std::string msg) const

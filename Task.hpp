@@ -23,6 +23,7 @@
 # define ERR_NONICKNAMEGIVEN(client) (":localhost 431 " + client + " :No nickname given\r\n")
 # define ERR_NICKNAMEINUSE(client, nck) (":localhost 433 " + client + ' ' + nck + " :Nickname is already in use\r\n")
 # define ERR_NICKCOLLISION(client, nck) (":localhost 436 " + client + ' ' + nck + " :Nickname collision KILL\r\n")
+# define ERR_NOTONCHANNEL(client, chnl) (":localhost 442 " + client + ' ' + chnl + " :You're not on that channel\r\n")
 # define ERR_SUMMONDISABLED(client) (":localhost 445 " + client + " :SUMMON has been disabled\r\n")
 # define ERR_USERSDISABLED(client) (":localhost 446 " + client + ":USERS has been disabled\r\n")
 # define ERR_NOTREGISTERED(client) (":localhost 451 " + client + " :You have not registered\r\n")
@@ -32,6 +33,7 @@
 # define ERR_CHANNELISFULLL(client, chnl) (":localhost 471 " + client + ' ' + chnl + " :Cannot join channel (+l)\r\n")
 # define ERR_INVITEONLYCHAN(client, chnl) (":localhost 473 " + client + ' ' + chnl + " :Cannot join channel (+i)\r\n")
 # define ERR_BADCHANNELKEY(client, chnl) (":localhost 475 " + client + ' ' + chnl + " :Cannot join channel (+k)\r\n")
+# define ERR_CHANOPRIVSNEEDED(client, chnl) (":localhost 482 " + client + ' ' + chnl + " :You're not channel operator\r\n")
 
 class Server;
 
@@ -49,6 +51,7 @@ class Task
         void ping(Client &c);
 		void pass(Client &c, Server &s);
 		void nick(Client &c, Server &s);
+		void kick(Client &c, Server &s);
 		void user(Client &c);
         void quit(Client &c, Server &s);
 		void join(Client &c, Server &s);
