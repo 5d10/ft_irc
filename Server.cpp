@@ -145,40 +145,6 @@ void Server::AcceptClient()
 	std::cout << "WORLD WIDE NOISE 🗣 🗣 🗣" << std::endl;//DEBUG
 }
 
-bool debug_is_printable_str(std::string str)
-{
-	for (unsigned int i = 0; i < str.size(); i++)
-		if (!isprint(str[i]) && !isspace(str[i]))
-			return false;
-	return true;
-}
-
-void debug_print_hex(std::string str)
-{
-	std::string hexChars = "0123456789ABCDEF";
-	for (unsigned int i = 0; i < str.size(); i++)
-	{
-		unsigned char c = str[i];
-		std::cout << hexChars[c / 16];
-		std::cout << hexChars[c % 16];
-		if (i < str.size() - 1)
-			std::cout << " ";
-	}
-}
-
-// move this elsewhere please???
-bool IsValidChannelName(const std::string &name)
-{
-	if (name.size() > 200)
-		return false;
-	if (name[0] != '#' || name[0] != '&')
-		return false;
-	for (unsigned int i = 1; i < name.size(); i++)
-		if (name[i] == ' ' || name[i] == ',' || name[i] == 7)
-			return false;
-	return true;
-}
-
 int Server::OnClientRead(size_t index)
 {
 	Client &client = getClientAtIndex(index); //* redundant, podriem enviar referencia directament

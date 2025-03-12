@@ -94,7 +94,7 @@ bool Channel::isValidChannelName(std::string name)
 {
     if (name.size() < 2 || name.size() > 200)
 		return false;
-	if (name[0] != '#' && name[0] != '&')
+	if (name[0] != '#' && name[0] != '&') // should we accept '&' prefixes?
 		return false;
 	for (unsigned int i = 1; i < name.size(); i++)
 		if (name[i] == ' ' || name[i] == ',' || name[i] == 7)
