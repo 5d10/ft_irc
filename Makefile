@@ -5,7 +5,7 @@ CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic-errors
 
 ifeq ($(DEBUG), TRUE)
-	CFLAGS += -g -fsanitize=address
+	CFLAGS += -g -fsanitize=address -D DEBUG=1
 endif
 
 HEADS = ft_irc.hpp \

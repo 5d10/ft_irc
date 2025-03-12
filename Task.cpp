@@ -361,6 +361,9 @@ void Task::privmsg(Client &c, Server &s)
 
 void Task::kick(Client &c, Server &s)
 { 
+	#if DEBUG
+		std::cout << "KICK: started" << std::endl;
+	#endif
 	if (args.size() < 2) {
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "KICK"));
 		return;
@@ -370,30 +373,60 @@ void Task::kick(Client &c, Server &s)
 	for (std::vector<std::string>::iterator i = channels.begin(), c_end = channels.end();
 		i != c_end; ++i)
 	{
+		#if DEBUG
+			std::cout << "KICK: trying channel ";
+			std::cout << *i  << std::endl;
+		#endif
 		std::map<std::string, Channel>::iterator ch_search = s.channels.find(*i);
 		if (ch_search == s.channels.end()) {
 			c.AddToWriteBuffer(ERR_NOSUCHCHANNEL(c.nickname, *i));
 			continue;
 		}
+		#if DEBUG
+			std::cout << "KICK: confirmed channel existance" << std::endl;
+		#endif
 		std::map<std::string, bool>::iterator user_search = ch_search->second.isOperator.find(c.nickname);
 		if (user_search == ch_search->second.isOperator.end()) {
 			c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, ch_search->first));
 			continue;
 		}
+		#if DEBUG
+			std::cout << "KICK: confirmed kicker is in channel" << std::endl;
+		#endif
 		if (!user_search->second) {
 			c.AddToWriteBuffer(ERR_CHANOPRIVSNEEDED(c.nickname, ch_search->first));
 			continue;
 		}
+		#if DEBUG
+			std::cout << "KICK: confirmed privileges" << std::endl;
+		#endif
 		for (std::vector<std::string>::iterator j = targets.begin(), t_end = channels.end();
 				j != t_end; ++j)
 		{
+			#if DEBUG
+				std::cout << "KICK: checking presence of ";
+				std::cout << *j << std::endl;
+			#endif
 			std::map<std::string, Client*>::iterator target_search = ch_search->second.serverClients.find(*j);
-			if (target_search  == ch_search->second.serverClients.end())
+			if (target_search == ch_search->second.serverClients.end()) {
+				#if DEBUG
+					std::cout << "KICK: continuing" << std::endl;
+				#endif
 				continue;
+			}
+			#if DEBUG
+				std::cout << "KICK: kicking user " << *j << std::endl;
+			#endif
 			//target_search.second->AddToWriteBuffer(/* FILL THIS */);
 			ch_search->second.removeUser(*j);
 		}
+		#if DEBUG
+			std::cout <<  "KICK: done with channel" << std::endl;
+		#endif
 	}
+	#if DEBUG
+		std::cout << "KICK: done" << std::endl;
+	#endif
 }
 
 bool Task::run(Client &c, Server &s)
