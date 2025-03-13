@@ -359,6 +359,54 @@ void Task::privmsg(Client &c, Server &s)
 	}
 }
 
+void Task::part(Client &c, Server &s)
+{
+	#if DEBUG
+		std::cout << "PART: started" << std::endl;
+	#endif
+	if (args.size() < 2) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PART"));
+		return;
+	}
+	std::vector<std::string> channels = string_split(args[0], ',', STRSPL_BUNDLE);
+	for (std::vector<std::string>::iterator i = channels.begin(), c_end = channels.end();
+		i != c_end; ++i)
+	{
+		#if DEBUG
+			std::cout << "PART: trying channel ";
+			std::cout << *i  << std::endl;
+		#endif
+		std::map<std::string, Channel>::iterator ch_search = s.channels.find(*i);
+		if (ch_search == s.channels.end()) {
+			c.AddToWriteBuffer(ERR_NOSUCHCHANNEL(c.nickname, *i));
+			continue;
+		}
+		#if DEBUG
+			std::cout << "PART: confirmed channel existance" << std::endl;
+		#endif
+		std::map<std::string, bool>::iterator user_search = ch_search->second.isOperator.find(c.nickname);
+		if (user_search == ch_search->second.isOperator.end()) {
+			c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, ch_search->first));
+			continue;
+		}
+		#if DEBUG
+			std::cout << "PART: confirmed parter is in channel" << std::endl;
+			std::cout << "PART: parting" << std::endl;
+		#endif
+		std::string message = ':' + c.nickname + '!' + "user" + "@localhost PART " + ch_search->first;
+		if (2 < args.size())
+			message += " :" + args[2];
+		ch_search->second.broadcast(message);
+		ch_search->second.removeUser(c.nickname);
+		#if DEBUG
+			std::cout <<  "PART: done with channel" << std::endl;
+		#endif
+	}
+	#if DEBUG
+		std::cout << "PART: done" << std::endl;
+	#endif
+}
+
 void Task::kick(Client &c, Server &s)
 { 
 	#if DEBUG
@@ -399,8 +447,9 @@ void Task::kick(Client &c, Server &s)
 		}
 		#if DEBUG
 			std::cout << "KICK: confirmed privileges" << std::endl;
+			std::cout << "KICK: there are " << targets.size() << " targets" << std::endl;
 		#endif
-		for (std::vector<std::string>::iterator j = targets.begin(), t_end = channels.end();
+		for (std::vector<std::string>::iterator j = targets.begin(), t_end = targets.end();
 				j != t_end; ++j)
 		{
 			#if DEBUG
@@ -417,7 +466,7 @@ void Task::kick(Client &c, Server &s)
 			#if DEBUG
 				std::cout << "KICK: kicking user " << *j << std::endl;
 			#endif
-			//target_search.second->AddToWriteBuffer(/* FILL THIS */);
+			//ch_search->second.broadcast(/* FILL THIS */);
 			ch_search->second.removeUser(*j);
 		}
 		#if DEBUG
@@ -464,6 +513,8 @@ bool Task::run(Client &c, Server &s)
 		privmsg(c, s);
 	else if (cmd == "KICK")
 		kick(c, s);
+	else if (cmd == "PART")
+		part(c, s);
 	else if (cmd == "USERS")
 		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
 	else if (cmd == "SUMMON")

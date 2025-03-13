@@ -51,6 +51,7 @@ class Task
         void ping(Client &c);
 		void pass(Client &c, Server &s);
 		void nick(Client &c, Server &s);
+		void part(Client &c, Server &s);
 		void kick(Client &c, Server &s);
 		void user(Client &c);
         void quit(Client &c, Server &s);
