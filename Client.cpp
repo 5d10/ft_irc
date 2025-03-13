@@ -8,17 +8,15 @@ Client::Client()
 	registered = false;
 }
 
-Client::Client(int fd/*, short *events_ref*/)
+Client::Client(int fd)
 {
 	this->fd = fd;
-	//events = events_ref;
 	rd_buff = "";
 	wr_buff = "";
 	registered = false;
 	passed = false;
 	nicked = false;
 	usernamed = false;
-	//events = NULL;
 }
 Client::Client(const Client &other)
 {
@@ -29,7 +27,6 @@ Client::Client(const Client &other)
 	passed = other.passed;
 	nicked = other.nicked;
 	usernamed = other.usernamed;
-	//events = other.events;
 }
 Client &Client::operator=(const Client &other)
 {
@@ -40,7 +37,6 @@ Client &Client::operator=(const Client &other)
 	passed = other.passed;
 	nicked = other.nicked;
 	usernamed = other.usernamed;
-	//events = other.events;
 	return *this;
 }
 
@@ -110,7 +106,7 @@ ssize_t Client::Read()
 	while (bytes_read > 0 && buffer[0] != '\n')
 	{
 		rd_buff += buffer[0];
-		bytes_read = recv(fd, buffer, sizeof(buffer), MSG_DONTWAIT); // this can block? (nc -C + Ctrl-D) // is client socket non-blocking?
+		bytes_read = recv(fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 	}
 	if (bytes_read <= 0)
 		buffer[0] = 0;

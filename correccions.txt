@@ -1,0 +1,8 @@
+main.cpp
+> atoi argument
+
+Server.cpp
+> EraseClient, remove from channel, i->second->broadcast(quit_message);//? doesn't seem to reflect on client?
+
+Task.cpp
+> //! "/ " dona segfault (custom split)

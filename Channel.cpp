@@ -3,7 +3,7 @@
 Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client *>& client_direction) : serverClients(client_direction)
 {
 	name = channelName;
-	isInviteOnly = false;//channelName[0] == '&'; //! ?
+	isInviteOnly = false;
 	isOperator[user] = true;
 	isPasswordNeeded = false;
 }
@@ -34,7 +34,6 @@ Channel::~Channel()
 
 bool Channel::containsUser(std::string name) const
 {
-	//*maybe we should consider getting rid of this or making it an always inline
     return isOperator.find(name) != isOperator.end();
 }
 
@@ -101,7 +100,7 @@ bool Channel::isValidChannelName(std::string name)
 {
     if (name.size() < 2 || name.size() > 200)
 		return false;
-	if (name[0] != '#' && name[0] != '&') // should we accept '&' prefixes?
+	if (name[0] != '#' && name[0] != '&' && name[0] != '!')
 		return false;
 	for (unsigned int i = 1; i < name.size(); i++)
 		if (name[i] == ' ' || name[i] == ',' || name[i] == 7)

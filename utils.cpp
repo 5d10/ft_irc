@@ -1,8 +1,6 @@
 #include "utils.hpp"
 #include "Server.hpp"
 
-//it would be nice if you added the capacity for it to treat things between quotes
-//	as a solid block IF told to do so i.e. bool argument
 std::vector<std::string> string_split(const std::string &string, const char &separator, const unsigned char options /*default value in hpp*/)
 {
 	int	from;
@@ -40,14 +38,3 @@ std::list<std::string>::iterator list_find(std::list<std::string>& list, std::st
 	#endif
 	return (i);
 }
-
-/*
-template<class C>
-typename std::list<C>::iterator list_find(std::list<C> list, C searched)
-{
-	typename std::list<C>::iterator i = list.begin();
-	const typename std::list<C>::iterator end = list.end();
-	while (i != end && *i != searched) ++i;
-	return (i);
-}
-*/

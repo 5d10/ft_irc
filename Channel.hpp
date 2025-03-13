@@ -13,14 +13,15 @@ class Channel
     public:
         std::string name;
         std::string password;
-        bool isPasswordNeeded; // ?
+        bool isPasswordNeeded;
         std::map<std::string, bool> isOperator; // doubles as client list (keys) and operator flags (values)
-        std::list<std::string> invitedUsers;//? could it be a map instead?
+        std::map<std::string, Client *>& serverClients;
+        std::list<std::string> invitedUsers;
         bool isInviteOnly;
         std::string topic;
         bool isTopicCommandOpOnly;
         ssize_t userLimit;
-        std::map<std::string, Client *>& serverClients;
+        
 
         Channel(std::string channelName, std::string user, std::map<std::string, Client *>& client_direction);
         Channel(const Channel &other);

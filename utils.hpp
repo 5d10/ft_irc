@@ -8,8 +8,6 @@
 # define STRSPL_BUNDLE 1 //tells string_split to treat consecutive separators as one
 std::vector<std::string> string_split(const std::string &string, const char &separator, unsigned char options = 0);
 
-//template<class C>
-//typename std::list<C>::iterator list_find(std::list<C> list, C searched);
 std::list<std::string>::iterator list_find(std::list<std::string>& list, std::string searched);
 
 #endif

@@ -10,12 +10,11 @@
 # include <iostream>
 # include <vector>
 # include <csignal>
-# include <cerrno> // is this allowed?
+# include <cerrno>
 # include <list>
 # include <map>
 # include <iterator>
 # include <cctype>
-# include <sys/time.h> // ping(?
 # include "utils.hpp"
 # include "Colors.h"
 

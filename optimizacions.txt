@@ -1,0 +1,14 @@
+Channel.cpp
+> bool Channel::containsUser(std::string name) const -> make inline
+
+Channel.hpp
+> std::map<std::string, std::pair<Client *, bool>>& members
+> std::list<std::string> invitedUsers; -> make into vector
+> > Reminder to go to Task::nick
+
+Server.cpp
+> errno msg init_listerner
+> Client &client = getClientAtIndex(index); //* redundant, podriem enviar referencia directament (OnClientRead)
+
+Task.cpp
+> Random default quit messages

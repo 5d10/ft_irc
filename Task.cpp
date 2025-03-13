@@ -30,10 +30,11 @@ Task::~Task()
 
 void Task::parse(std::string fullCmd)
 {
-	//! "/ " dona segfault
     std::vector<std::string> split;
 	std::size_t lastArgStart = fullCmd.find(" :");
 	std::string lastArg;
+
+	fullCmd.resize(fullCmd.size() - 2);
 
 	if (lastArgStart != std::string::npos) {
 		lastArg = fullCmd.substr(lastArgStart + 2);
@@ -41,17 +42,17 @@ void Task::parse(std::string fullCmd)
 	}
     while (fullCmd.size() > 0)
     {
-        if (std::isspace(fullCmd[0]))//my brother in christ, we only want to care about ' '
+        if (fullCmd[0] == ' ')
         {
             unsigned int newStart = 0;
-            while (newStart < fullCmd.size() && std::isspace(fullCmd[newStart]))
+            while (newStart < fullCmd.size() && fullCmd[newStart] == ' ')
                 newStart++;
             fullCmd = newStart < fullCmd.size() ? fullCmd.substr(newStart, fullCmd.size()) : "";
         }
         if (fullCmd.size() > 0)
         {
             unsigned int newStart = 0;
-            while (newStart < fullCmd.size() && !std::isspace(fullCmd[newStart]))
+            while (newStart < fullCmd.size() && fullCmd[newStart] != ' ')
                 newStart++;
             split.push_back(fullCmd.substr(0, newStart));
             fullCmd = fullCmd.substr(newStart, fullCmd.size());
@@ -85,23 +86,11 @@ void Task::ping(Client &c)
         isValidArg = std::isdigit(args[0][i]);
     if (isValidArg)
     {
-        // struct timeval time;
-	    // gettimeofday(&time, NULL);
-        // unsigned long msec = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-        std::string pongMsg = ":nick1!user@localhost PONG :";
+        std::string pongMsg = ":" + c.nickname + "!" + c.username + "@localhost PONG :";
         if (hasLagPrefix)
             pongMsg += "LAG";
-        // unsigned long div = 1;
-        // while (msec / div >= 10)
-        //     div *= 10;
-        // while (div > 0)
-        // {
-        //     pongMsg += '0' + (msec / div % 10);
-        //     div /= 10;
-        // }
         pongMsg += args[0].substr(hasLagPrefix ? 3 : 0, args[0].size());
         pongMsg += "\r\n";
-        std::cout << pongMsg;
         c.AddToWriteBuffer(pongMsg);
     }
 }
@@ -134,7 +123,7 @@ void Task::pass(Client &c, Server &s)
 		#if DEBUG
 			std::cout << "PASS: wrong password" << std::endl;
 		#endif
-		c.AddToWriteBuffer(ERR_PASSWDMISMATCH(c.nickname));//!PLEASE replace with an attempt to get the nonexisting name
+		c.AddToWriteBuffer(ERR_PASSWDMISMATCH(c.nickname));
 	}
 }
 
@@ -148,7 +137,7 @@ void Task::nick(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_NONICKNAMEGIVEN(c.nickname));
 		return;
 	}
-	//! this can be replaced with map.find()
+
 	std::list<Client>::iterator i = s.clients.begin();
 	const std::list<Client>::iterator end = s.clients.end();
 	while (i != end)
@@ -192,7 +181,7 @@ void Task::join(Client &c, Server &s)
 	std::vector<std::string> joining = string_split(args[0], ',');
 	std::vector<std::string> passwords;
 	if (1 < args.size())
-		passwords = string_split(args[1], ',');//consucutive ',' generate many entries, which we want
+		passwords = string_split(args[1], ',');//consecutive ',' generate many entries, which we want
 	unsigned int i = joining.size();
 	while (i--)
 	{
@@ -208,25 +197,14 @@ void Task::join(Client &c, Server &s)
 			#if DEBUG
 				std::cout << "JOIN: creating channel " << joining[i] << std::endl;
 			#endif
-			s.channels.insert(std::pair<std::string, Channel>(joining[i], Channel(joining[i], c.nickname, s.registered)));//! make sure the default constructor initializaes everything to 0
-			//? RPL_NOTOPIC is not said to be a possible reply of JOIN, yet it exists for other commands.
-				//? Is it possible for complete servers to unset an hypothetical default topic to achive a non-topic?
-			// c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
-			#if DEBUG
-				std::cout << "SENT REPLY:\n";
-				std::cout << (":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
-				std::cout << (RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
-				std::cout << (RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
-			#endif
+			s.channels.insert(std::pair<std::string, Channel>(joining[i], Channel(joining[i], c.nickname, s.registered)));
 			c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
-			c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
+			c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
 			c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
 
 		}
 		else
 		{//the channel does exist
-			//? we should think whether Channel::addUser is called only if we know we want to add it or let it
-				//? check that itself AND send the numeric replies if needed
 			#if DEBUG
 				std::cout << "JOIN: trying to join channel " << joining[i] << std::endl;
 			#endif
@@ -273,14 +251,8 @@ void Task::join(Client &c, Server &s)
 					std::cout << (RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 					std::cout << (RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
 				#endif
-				/*
-				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
-				// c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], s.channels.at(joining[i]).topic));
-				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
-				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
-				*/
-				//Reply when creating channel (works correctly):
 
+				//Reply when creating channel (works correctly):
 				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
 				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
@@ -293,23 +265,11 @@ void Task::join(Client &c, Server &s)
 	}
 }
 
-
-/*
-:blvilarn JOIN :#patata
-:localhost 332 blvilarn #patata :TEST TOPIC
-:localhost 353 blvilarn #patata :@blvilarn
-
-:test1 JOIN :#pastanaga
-:localhost 332 test1 #pastanaga :TEST TOPIC
-:localhost 353 test1 #pastanaga :@test1
-
-*/
-
 void Task::quit(Client &c, Server &s)
 {
 	std::string quit_message;
 	if (args.size() < 1)
-		quit_message = "[username] has left the chat"; //* We need to agree on a default message
+		quit_message = c.nickname + " has left the chat";
 	else
 		quit_message = args[0];
 
@@ -330,9 +290,6 @@ void Task::quit(Client &c, Server &s)
 //*  RPL_AWAY
 void Task::privmsg(Client &c, Server &s)
 {
-	//! For some reason message, client X only recieves client Y message when client Y writes and viceversa
-	//! Also, the names on the message are switched for some reason
-
 	#if DEBUG
 		std::cout << "ENTERING PRIVMSG" << std::endl;
 	#endif
@@ -393,7 +350,7 @@ void Task::part(Client &c, Server &s)
 			std::cout << "PART: confirmed parter is in channel" << std::endl;
 			std::cout << "PART: parting" << std::endl;
 		#endif
-		std::string message = ':' + c.nickname + '!' + "user" + "@localhost PART " + ch_search->first;
+		std::string message = ':' + c.nickname + '!' + c.username + "@localhost PART " + ch_search->first;
 		if (2 < args.size())
 			message += " :" + args[2];
 		ch_search->second.broadcast(message);
@@ -530,37 +487,8 @@ bool Task::run(Client &c, Server &s)
 			std::cout << "Server: debug: client registered" << std::endl;
 		#endif
 		c.registered= true;
-
-		/*
-		Taken from another ft_irc as reference, these happen when registration finishes
-
-		getClientAtIndex(i).AddToWriteBuffer(":nick1!@localhost NICK nick1\r\n");
-		getClientAtIndex(i).AddToWriteBuffer("localhost 001 nick1 :Welcome to the Internet Relay Network :nick1!user@localhost\r\n");
-		getClientAtIndex(i).AddToWriteBuffer(":localhost 002 nick1 :Your host is 42_Ftirc (localhost), running version 1.1\r\n");
-		getClientAtIndex(i).AddToWriteBuffer(":localhost 003 nick1 :This server was created 15-01-2025 11:44:24\r\n");
-		getClientAtIndex(i).AddToWriteBuffer(":localhost 004 nick1 localhost 1.1 io kost k\r\n");
-		getClientAtIndex(i).AddToWriteBuffer(":localhost 005 nick1 CHANNELLEN=32 NICKLEN=9 TOPICLEN=307 :are supported by this server\r\n");
-		*/
-	
-		// c.AddToWriteBuffer(":" + c.nickname + "!@localhost NICK " + c.nickname + "\r\n"); // not necessary for correct nick registration
 		c.AddToWriteBuffer(":localhost 001 " + c.nickname + " :Welcome to the Internet Relay Network :" + c.nickname + "!" + c.username + "@localhost\r\n");
 		c.AddToWriteBuffer(":localhost 376 " + c.nickname + " :End of /MOTD command.\r\n");
-		
-	// doesn't fix what I'm trying to fix
-	//	if (s.clients.size() == 2)
-	//	{
-	//		c.AddToWriteBuffer(RPL_LUSERCLIENT(c.nickname, "1"));
-	//		c.AddToWriteBuffer(RPL_LUSRME(c.nickname, "1"));
-	//	}
-	//	else if (s.clients.size() == 3)
-	//	{
-	//		c.AddToWriteBuffer(RPL_LUSERCLIENT(c.nickname, "2"));
-	//		c.AddToWriteBuffer(RPL_LUSRME(c.nickname, "2"));
-	//	}
-		//c.AddToWriteBuffer(RPL_LUSERCLIENT(c.nickname, ft_itoa(s.clients.size())));
-		//c.AddToWriteBuffer(RPL_LUSRME(c.nickname, ft_itoa(s.clients.size())));
-	//	c.AddToWriteBuffer(MSG_NICK(c.nickname));
-	//	c.AddToWriteBuffer(MSG_USER(c.username, c.realname));
 	}
 	#if DEBUG
 	else

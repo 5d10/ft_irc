@@ -11,7 +11,6 @@ class Client
         int fd;
         std::string rd_buff;
         std::string wr_buff;
-        //short *events;
         Client();
         std::string format_buffer(std::string buffer) const;
         void print_buffer(std::string buffer) const;
@@ -26,7 +25,7 @@ class Client
 		std::string realname;
         std::map<std::string, Channel *> joined;
 
-        Client(int fd/*, short *events_ref*/);
+        Client(int fd);
         Client(const Client &other);
         Client &operator=(const Client &other);
         ~Client();

@@ -1,6 +1,8 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
+# include <cstdio> // std::perror
+
 #include "ft_irc.hpp"
 #include "Client.hpp"
 #include "Channel.hpp"
@@ -17,7 +19,6 @@ class Server
 
         int initialize_listener(const int port);
         Client &getClientAtIndex(size_t index);
-        void DisconnectClient(size_t index);//*use EraseClient instead
         void SetClientPolloutFlags();
     public:
         const char *const password;
