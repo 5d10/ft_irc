@@ -25,7 +25,7 @@ all: $(NAME)
 $(NAME): Makefile $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
 
-$ (OBJ): $(OBJ_DIR)%.o: ${SRC_DIR}/%.cpp
+$(OBJ): $(OBJ_DIR)%.o: ${SRC_DIR}/%.cpp
 	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
 -include $(DEP)
