@@ -1,19 +1,14 @@
 NAME = ircserv
 
-CC = c++
+SRC_DIR = src
+OBJ_DIR = obj
 
-CFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic-errors
+CC = c++
+CFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic-errors -I headers/
 
 ifeq ($(DEBUG), TRUE)
 	CFLAGS += -g -fsanitize=address -D DEBUG=1
 endif
-
-HEADS = ft_irc.hpp \
-		Server.hpp \
-		Client.hpp \
-		Channel.hpp \
-		Task.hpp \
-		utils.hpp
 
 SRC = 	main.cpp \
 		Server.cpp \
@@ -22,19 +17,21 @@ SRC = 	main.cpp \
 		Task.cpp \
 		utils.cpp\
 
-OBJS = $(SRC:%.cpp=%.o)
-DEPS = $(SRC:%.cpp=%.d)
+OBJ = $(SRC:%.cpp=${OBJ_DIR}/%.o)
+DEP = $(SRC:%.cpp=${OBJ_DIR}/%.d)
 
-all: $(NAME) 
+all: $(NAME)
 
-%.o: %.cpp $(HEADS)
+$(NAME): Makefile $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
+
+$ (OBJ): $(OBJ_DIR)%.o: ${SRC_DIR}/%.cpp
+	mkdir -p $(@D)
 	$(CC) $(CFLAGS) -MMD -c $< -o $@
-
-$(NAME): Makefile $(OBJS) $(HEADS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+-include $(DEP)
 
 clean:
-	rm -f $(OBJS) $(DEPS)
+	rm -rf $(OBJ_DIR)
 
 fclean: clean
 	rm -f $(NAME)
