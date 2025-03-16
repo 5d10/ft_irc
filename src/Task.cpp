@@ -418,19 +418,17 @@ void Task::kick(Client &c, Server &s)
 				std::cout << "KICK: checking presence of ";
 				std::cout << *j << std::endl;
 			#endif
-			std::map<std::string, Client*>::iterator target_search = ch_search->second.serverClients.find(*j);
-			if (target_search == ch_search->second.serverClients.end()) {
-				#if DEBUG
-					std::cout << "KICK: continuing" << std::endl;
-				#endif
+			std::map<std::string, bool>::iterator target_search = ch_search->second.isOperator.find(*j);
+			if (target_search == ch_search->second.isOperator.end()) {
+				c.AddToWriteBuffer(ERR_USERNOTINCHANNEL(c.nickname, *j, *i));
 				continue;
 			}
 			#if DEBUG
 				std::cout << "KICK: kicking user " << *j << std::endl;
 			#endif
-			std::string message = ':' + target_search->second->nickname + '!' + target_search->second->username + "@localhost KICK" + ch_search->first;
-			if (1 < args.size())
-				message += " :" + args[1];
+			std::string message = ':' + c.nickname + '!' + c.username + "@localhost KICK " + ch_search->first + ' ' + *j;
+			if (2 < args.size())
+				message += " :" + args[2];
 			#if DEBUG
 				std::cout << "PART: sending: " << message << std::endl;
 			#endif
