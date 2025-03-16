@@ -198,10 +198,9 @@ void Task::join(Client &c, Server &s)
 				std::cout << "JOIN: creating channel " << joining[i] << std::endl;
 			#endif
 			s.channels.insert(std::pair<std::string, Channel>(joining[i], Channel(joining[i], c.nickname, s.registered)));
-			c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
+			c.AddToWriteBuffer(":" + c.nickname + '!' + c.username + "@localhost" + " JOIN :" + joining[i] + "\r\n");
 			c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
 			c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
-
 		}
 		else
 		{//the channel does exist
@@ -247,14 +246,16 @@ void Task::join(Client &c, Server &s)
 				}
 				#if DEBUG
 					std::cout << "SENT REPLY:\n";
-					std::cout << (":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
+					std::cout << (":" + c.nickname + '!' + c.username + "@localhost" + " JOIN :" + joining[i] + "\r\n");
 					std::cout << (RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
 					std::cout << (RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
 				#endif
 
-				//Reply when creating channel (works correctly):
-				c.AddToWriteBuffer(":" + c.nickname + " JOIN :" + joining[i] + "\r\n");
-				c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
+				c.AddToWriteBuffer(":" + c.nickname + '!' + c.username + "@localhost" + " JOIN :" + joining[i] + "\r\n");
+				if (attempting->topic.empty())
+					c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
+				else
+					c.AddToWriteBuffer(RPL_TOPIC(c.nickname, joining[i], attempting->topic));
 				c.AddToWriteBuffer(RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
 				c.AddToWriteBuffer(RPL_ENDOFNAMES(c.nickname, joining[i]));
 			}
@@ -321,7 +322,7 @@ void Task::part(Client &c, Server &s)
 	#if DEBUG
 		std::cout << "PART: started" << std::endl;
 	#endif
-	if (args.size() < 2) {
+	if (args.size() < 1) {
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PART"));
 		return;
 	}
@@ -351,8 +352,12 @@ void Task::part(Client &c, Server &s)
 			std::cout << "PART: parting" << std::endl;
 		#endif
 		std::string message = ':' + c.nickname + '!' + c.username + "@localhost PART " + ch_search->first;
-		if (2 < args.size())
-			message += " :" + args[2];
+		if (1 < args.size())
+			message += " :" + args[1];
+		#if DEBUG
+			std::cout << "PART: sending: " << message << std::endl;
+		#endif
+		message += "\r\n";
 		ch_search->second.broadcast(message);
 		ch_search->second.removeUser(c.nickname);
 		#if DEBUG
@@ -423,7 +428,14 @@ void Task::kick(Client &c, Server &s)
 			#if DEBUG
 				std::cout << "KICK: kicking user " << *j << std::endl;
 			#endif
-			//ch_search->second.broadcast(/* FILL THIS */);
+			std::string message = ':' + target_search->second->nickname + '!' + target_search->second->username + "@localhost KICK" + ch_search->first;
+			if (1 < args.size())
+				message += " :" + args[1];
+			#if DEBUG
+				std::cout << "PART: sending: " << message << std::endl;
+			#endif
+			message += "\r\n";
+			ch_search->second.broadcast(message);
 			ch_search->second.removeUser(*j);
 		}
 		#if DEBUG
@@ -456,9 +468,9 @@ bool Task::run(Client &c, Server &s)
 		user(c);
 		goto validate; }
 	else if (!c.registered)
-	{
+	{ 
 		#if DEBUG
-			std::cout << "ANY: not registered" << std::endl;
+				std::cout << "ANY: not registered" << std::endl;
 		#endif
 		c.AddToWriteBuffer(ERR_NOTREGISTERED(c.nickname));
 	}

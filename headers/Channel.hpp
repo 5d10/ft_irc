@@ -14,12 +14,12 @@ class Channel
         std::string name;
         std::string password;
         bool isPasswordNeeded;
+        bool isInviteOnly;
+        bool isTopicCommandOpOnly;
         std::map<std::string, bool> isOperator; // doubles as client list (keys) and operator flags (values)
         std::map<std::string, Client *>& serverClients;
         std::list<std::string> invitedUsers;
-        bool isInviteOnly;
         std::string topic;
-        bool isTopicCommandOpOnly;
         ssize_t userLimit;
         
 
