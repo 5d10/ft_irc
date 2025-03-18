@@ -273,6 +273,8 @@ void Server::Rename(Client& client, std::string new_name)
 		std::map<std::string, Channel>::iterator end = channels.end();
 		while (i != end)
 		{
+			if (client.nicked)
+				i->second.broadcast(':'+old_name+'!'+ client.username+"@localhost NICK :" + new_name + "\r\n");
 			i->second.Rename(old_name, new_name);
 			++i;
 		}
