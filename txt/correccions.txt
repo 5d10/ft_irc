@@ -9,6 +9,3 @@ Task.cpp
 
 Channel
 > No s'està esborrant al quedar buit
-
-Task::join
-> En el cas d'unir-se a un canal, hauria de comprobar si hi una un tema posat i en cas contrari enviar NO_TOPIC

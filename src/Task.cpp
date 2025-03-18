@@ -244,13 +244,6 @@ void Task::join(Client &c, Server &s)
 					#endif
 					attempting->invitedUsers.erase(invitation);
 				}
-				#if DEBUG
-					std::cout << "SENT REPLY:\n";
-					std::cout << (":" + c.nickname + '!' + c.username + "@localhost" + " JOIN :" + joining[i] + "\r\n");
-					std::cout << (RPL_TOPIC(c.nickname, joining[i], "TEST TOPIC"));
-					std::cout << (RPL_NAMREPLY(c.nickname, joining[i], s.channels.at(joining[i]).getUserList()));
-				#endif
-
 				c.AddToWriteBuffer(":" + c.nickname + '!' + c.username + "@localhost" + " JOIN :" + joining[i] + "\r\n");
 				if (attempting->topic.empty())
 					c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, joining[i]));
