@@ -309,7 +309,8 @@ void Task::privmsg(Client &c, Server &s)
 		if (temp.find(":localhost") != std::string::npos)
 			temp.erase(temp.find(":localhost"));
 		if (s.channels.find(temp) != s.channels.end()) {
-			s.channels.at(temp).broadcast(":" + c.nickname + " PRIVMSG " + targets[i] + " :" + args[1] + "\r\n", c.nickname);
+			if (s.channels.at(temp).isOperator.find(c.nickname) != s.channels.at(temp).isOperator.end())
+				s.channels.at(temp).broadcast(":" + c.nickname + " PRIVMSG " + targets[i] + " :" + args[1] + "\r\n", c.nickname);
 		} else {
 			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, targets[i]));
 		}
