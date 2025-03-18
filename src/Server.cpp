@@ -79,6 +79,8 @@ void Server::EraseClient(Client &client, std::string quit_message)
 				++i;
 				channels.erase(temp);
 			}
+			else
+				++i;
 		}
 	}
 	//remove from Server
