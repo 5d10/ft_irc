@@ -64,15 +64,23 @@ void Server::AddClient(int fd, short flags)
 
 void Server::EraseClient(Client &client, std::string quit_message)
 {
-	{//remove from Channels
-		const std::map<std::string, Channel *>::iterator end = client.joined.end();
-		for (std::map<std::string, Channel *>::iterator i = client.joined.begin(); i != end; ++i)
+	//remove from Channels
+	{
+		std::map<std::string, Channel>::iterator i = channels.begin();
+		std::map<std::string, Channel>::iterator end = channels.end();
+		std::map<std::string, Channel>::iterator temp;
+		while (i != end)
 		{
-			i->second->removeUser(client.nickname);
-			i->second->broadcast(quit_message);
+			i->second.removeUser(client.nickname);
+			i->second.broadcast(quit_message);
+			if (i->second.isOperator.empty())
+			{
+				temp = i;
+				++i;
+				channels.erase(temp);
+			}
 		}
 	}
-
 	//remove from Server
 	unsigned int i = 0;
 	std::list<Client>::iterator it = clients.begin();

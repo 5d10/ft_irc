@@ -23,7 +23,7 @@ class Client
 		std::string nickname;
 		std::string username;
 		std::string realname;
-        std::map<std::string, Channel *> joined;
+       // std::map<std::string, Channel *> joined;
 
         Client(int fd);
         Client(const Client &other);

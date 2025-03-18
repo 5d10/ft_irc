@@ -363,6 +363,8 @@ void Task::part(Client &c, Server &s)
 		#if DEBUG
 			std::cout <<  "PART: done with channel" << std::endl;
 		#endif
+		if (ch_search->second.isOperator.empty())
+			s.channels.erase(ch_search);
 	}
 	#if DEBUG
 		std::cout << "PART: done" << std::endl;
@@ -436,6 +438,8 @@ void Task::kick(Client &c, Server &s)
 			ch_search->second.broadcast(message);
 			ch_search->second.removeUser(*j);
 		}
+		if (ch_search->second.isOperator.empty())
+			s.channels.erase(ch_search);
 		#if DEBUG
 			std::cout <<  "KICK: done with channel" << std::endl;
 		#endif

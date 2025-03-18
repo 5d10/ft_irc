@@ -61,7 +61,14 @@ void Channel::addUser(std::string name)
 
 void Channel::removeUser(std::string name)
 {
+	#if DEBUG
+		std::cout << "Channel::removeUser: channel size is " << isOperator.size() << std::endl;
+		std::cout << "Channel::removeUser: removing " << name << std::endl;
+	#endif
 	isOperator.erase(name);
+	#if DEBUG
+		std::cout << "Channel::removeUser: is channel empty? " << isOperator.empty();
+	#endif
 	//* would be nice if erasure from invitedUsers was done as well
 	/*
 		imagine you are a channop and you want to invite someone to your invite only chan,
