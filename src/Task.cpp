@@ -261,16 +261,16 @@ void Task::join(Client &c, Server &s)
 
 void Task::quit(Client &c, Server &s)
 {
-	std::string quit_message;
+	std::string quit_message = ':' + c.nickname + '!' + c.username + "@localhost QUIT :";
 	if (args.size() < 1)
-		quit_message = c.nickname + " has left the chat";
+		quit_message += c.nickname + " has left the chat\r\n";
 	else
-		quit_message = args[0];
+		quit_message += args[0] + "\r\n";
 
 	#if DEBUG
 		std::cout << "QUIT: message is `" << "QUIT " << quit_message << '\'' << std::endl;
 	#endif
-	s.EraseClient(c, "QUIT " + quit_message);
+	s.EraseClient(c, quit_message);
 	#if DEBUG
 		std::cout << "QUIT: success" << std::endl;
 	#endif
