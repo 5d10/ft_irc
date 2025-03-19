@@ -5,6 +5,8 @@ Channel.hpp
 > std::map<std::string, std::pair<Client *, bool>>& members
 > std::list<std::string> invitedUsers; -> make into vector
 > > Reminder to go to Task::nick
+> remove isPasswordNeeded
+> > Go to {Task::join, Task::mode} and change checks to password.empty()
 
 Server.cpp
 > errno msg init_listerner
@@ -12,3 +14,4 @@ Server.cpp
 
 Task.cpp
 > Random default quit messages
+

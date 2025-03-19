@@ -181,7 +181,7 @@ void Task::join(Client &c, Server &s)
 	std::vector<std::string> joining = string_split(args[0], ',');
 	std::vector<std::string> passwords;
 	if (1 < args.size())
-		passwords = string_split(args[1], ',');//consecutive ',' generate many entries, which we want
+		 passwords = string_split(args[1], ',');//consecutive ',' generate many entries, which we want
 	unsigned int i = joining.size();
 	while (i--)
 	{
@@ -443,6 +443,113 @@ void Task::kick(Client &c, Server &s)
 	#endif
 }
 
+static void _update_flag(bool& flag, char kind)
+{
+	switch (kind)
+	{
+		case '+':
+			flag = true;
+			break;
+		case '-':
+			flag = false;
+			break;
+		default:
+			flag = !flag;
+	}
+}
+
+void Task::mode(Client &c, Server &s)
+{
+	if (args.size() < 2 || args[1].empty()) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return;
+	}
+	std::map<std::string, Channel>::iterator ch_search = s.channels.find(args[0]);
+	if (ch_search == s.channels.end()) {
+		c.AddToWriteBuffer(ERR_NOSUCHCHANNEL(c.nickname, args[0]));
+		return;
+	}
+	Channel& chan = ch_search->second;
+	std::map<std::string, bool>::iterator user_search = chan.isOperator.find(c.nickname);
+	if (user_search == chan.isOperator.end()) {
+		c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, args[0]));
+		return; }
+	if (!user_search->second) {
+		c.AddToWriteBuffer(ERR_CHANOPRIVSNEEDED(c.nickname, args[0]));
+		return;
+	}
+	char operation;
+	if (args[1][0] == '+' || args[1][0] == '-')
+	{//+-[x]
+		if (args[1].size() < 2) {
+			c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+			return; }
+		operation = args[1][1];
+	}
+	else
+		operation = args[1][0];
+	switch (operation)
+	{//lacks RPL_CHANNELMODEIS
+		case 'i':
+			_update_flag(chan.isInviteOnly, args[1][0]);
+			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', static_cast<char>(chan.isInviteOnly)));
+			break;
+		case 't':
+			_update_flag(chan.isTopicCommandOpOnly, args[1][0]);
+			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', static_cast<char>(chan.isTopicCommandOpOnly)));
+			break;
+		case 'o':
+			if (args.size() < 3) { 
+				c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+				return; }
+			{
+				std::map<std::string, bool>::iterator target_search = chan.isOperator.find(args[2]);
+				if (target_search == chan.isOperator.end()) {
+					c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, args[2]));
+					return; }
+				_update_flag(target_search->second, args[1][0]);
+			}
+			//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, '0', chan.isTopicCommandOpOnly);
+			//Tengo que aclarar el caso donde la info es del usuario
+				//RPL_UMODEIS existe, pero no tengo del todo claro el mensaje
+			break;
+		case 'k':
+			if ((args[1][0] == '-') || (args[1][0] != '+' && args.size() < 3)) {
+				chan.isPasswordNeeded = false;
+				chan.password.clear();
+				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
+			}
+			else
+			{
+				if (args.size() < 3) {
+					c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+					return; }
+				if (chan.isPasswordNeeded)
+					c.AddToWriteBuffer(ERR_KEYSET(c.nickname, chan.name));
+				chan.isPasswordNeeded = true;
+				chan.password = args[2];
+				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
+			}
+			break;
+		case 'l':
+			if (args[1][0] == '-' || (args[1][0] != '+' && args.size() < 3))
+				chan.userLimit = 0;
+			else
+			{
+				if (args.size() < 3) {
+					c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+					return; }
+				chan.userLimit = std::atol(args[2].c_str());
+			}
+			//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l',  chan.userLimit));
+			break;
+		default:
+			c.AddToWriteBuffer(ERR_UNKNOWNMODE(c.nickname, operation));
+			return;
+	}
+}
+
+//Returns TRUE when command caused the client to be deleted, false otherwise
 bool Task::run(Client &c, Server &s)
 {
 	#if DEBUG
@@ -456,7 +563,7 @@ bool Task::run(Client &c, Server &s)
 	}
 	else if (cmd == "PASS") {
 		pass(c, s);
-	}
+	}//! Ain't we missing a goto?
 	else if (cmd == "NICK") {
 		nick(c, s);
 		goto validate; }
@@ -480,6 +587,8 @@ bool Task::run(Client &c, Server &s)
 		kick(c, s);
 	else if (cmd == "PART")
 		part(c, s);
+	else if (cmd == "MODE")
+		mode(c, s);
 	else if (cmd == "USERS")
 		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
 	else if (cmd == "SUMMON")
@@ -488,6 +597,7 @@ bool Task::run(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_UNKNOWNCOMMAND(c.nickname, cmd));
 	return (false);
 
+	//tbh this could be a method of Client
 	validate:
 	if (!c.registered && c.passed && c.nicked && c.usernamed)
 	{
@@ -505,6 +615,7 @@ bool Task::run(Client &c, Server &s)
 	return (false);
 }
 
+//This will make me cry -G
 bool Task::run(std::string fullCmd, Client &c, Server &s)
 {
     return (Task(fullCmd).run(c, s));
