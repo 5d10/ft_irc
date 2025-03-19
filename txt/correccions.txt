@@ -6,3 +6,6 @@ Server.cpp
 
 Task.cpp
 > //! "/ " dona segfault (custom split)
+
+Channel
+> No s'està esborrant al quedar buit

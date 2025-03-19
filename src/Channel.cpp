@@ -3,9 +3,10 @@
 Channel::Channel(std::string channelName, std::string user, std::map<std::string, Client *>& client_direction) : serverClients(client_direction)
 {
 	name = channelName;
+	isPasswordNeeded = false;
 	isInviteOnly = false;
 	isOperator[user] = true;
-	isPasswordNeeded = false;
+	userLimit = 2;
 }
 
  Channel::Channel(const Channel &other): serverClients(other.serverClients)
@@ -60,8 +61,14 @@ void Channel::addUser(std::string name)
 
 void Channel::removeUser(std::string name)
 {
+	#if DEBUG
+		std::cout << "Channel::removeUser: channel size is " << isOperator.size() << std::endl;
+		std::cout << "Channel::removeUser: removing " << name << std::endl;
+	#endif
 	isOperator.erase(name);
-	serverClients.erase(name);
+	#if DEBUG
+		std::cout << "Channel::removeUser: is channel empty? " << isOperator.empty();
+	#endif
 	//* would be nice if erasure from invitedUsers was done as well
 	/*
 		imagine you are a channop and you want to invite someone to your invite only chan,
@@ -75,11 +82,20 @@ void Channel::broadcast(std::string msg) const
 	std::map<std::string, Client *>::const_iterator i  = serverClients.begin();
 	std::map<std::string, Client *>::const_iterator end  = serverClients.end();
 
+	#if DEBUG
+		std::cout << "Broadcasting(1) to: ";
+	#endif
 	while (i != end)
 	{
+		#if DEBUG
+			std::cout << serverClients.at(i->first)->nickname << ", ";
+		#endif
 		serverClients.at(i->first)->AddToWriteBuffer(msg);
 		++i;
 	}
+	#if DEBUG
+		std::cout << std::endl;
+	#endif
 }
 
 void Channel::broadcast(std::string msg, std::string sender) const
@@ -87,12 +103,21 @@ void Channel::broadcast(std::string msg, std::string sender) const
 	std::map<std::string, Client *>::const_iterator i  = serverClients.begin();
 	std::map<std::string, Client *>::const_iterator end  = serverClients.end();
 
+	#if DEBUG
+		std::cout << "Broadcasting(2) to: ";
+	#endif
 	while (i != end)
 	{
+		#if DEBUG
+			std::cout << serverClients.at(i->first)->nickname << ", ";
+		#endif
 		if (i->first != sender)
 			serverClients.at(i->first)->AddToWriteBuffer(msg);
 		++i;
 	}
+	#if DEBUG
+		std::cout << std::endl;
+	#endif
 }
 
 

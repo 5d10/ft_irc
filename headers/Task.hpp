@@ -23,6 +23,7 @@
 # define ERR_NONICKNAMEGIVEN(client) (":localhost 431 " + client + " :No nickname given\r\n")
 # define ERR_NICKNAMEINUSE(client, nck) (":localhost 433 " + client + ' ' + nck + " :Nickname is already in use\r\n")
 # define ERR_NICKCOLLISION(client, nck) (":localhost 436 " + client + ' ' + nck + " :Nickname collision KILL\r\n")
+# define ERR_USERNOTINCHANNEL(client, chnl, nck) (":localhost 441 " + client + ' ' + nck + ' ' + chnl + " :They aren't on that channel\r\n")
 # define ERR_NOTONCHANNEL(client, chnl) (":localhost 442 " + client + ' ' + chnl + " :You're not on that channel\r\n")
 # define ERR_SUMMONDISABLED(client) (":localhost 445 " + client + " :SUMMON has been disabled\r\n")
 # define ERR_USERSDISABLED(client) (":localhost 446 " + client + ":USERS has been disabled\r\n")
