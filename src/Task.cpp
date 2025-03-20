@@ -480,7 +480,7 @@ void Task::mode(Client &c, Server &s)
 	}
 	char operation;
 	if (args[1][0] == '+' || args[1][0] == '-')
-	{//+-[x]
+	{//if +-[x]
 		if (args[1].size() < 2) {
 			c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
 			return; }
@@ -489,14 +489,14 @@ void Task::mode(Client &c, Server &s)
 	else
 		operation = args[1][0];
 	switch (operation)
-	{//lacks RPL_CHANNELMODEIS
+	{
 		case 'i':
 			_update_flag(chan.isInviteOnly, args[1][0]);
-			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', static_cast<char>(chan.isInviteOnly)));
+			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', (chan.isInviteOnly ? "true" : "false")));
 			break;
 		case 't':
 			_update_flag(chan.isTopicCommandOpOnly, args[1][0]);
-			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', static_cast<char>(chan.isTopicCommandOpOnly)));
+			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', (chan.isTopicCommandOpOnly ? "true" : "false")));
 			break;
 		case 'o':
 			if (args.size() < 3) { 
@@ -541,7 +541,7 @@ void Task::mode(Client &c, Server &s)
 					return; }
 				chan.userLimit = std::atol(args[2].c_str());
 			}
-			//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l',  chan.userLimit));
+			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? "to be implemented"/*have our own t_string*/:"(none)"));
 			break;
 		default:
 			c.AddToWriteBuffer(ERR_UNKNOWNMODE(c.nickname, operation));

@@ -7,5 +7,5 @@ Server.cpp
 Task.cpp
 > //! "/ " dona segfault (custom split)
 
-Channel
-> No s'està esborrant al quedar buit
+MODE
+> La primera vegada qeu l'utilitza en un canal, no mostra la resposta que enviem (i si, la enviem)
