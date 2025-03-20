@@ -443,24 +443,9 @@ void Task::kick(Client &c, Server &s)
 	#endif
 }
 
-static void _update_flag(bool& flag, char kind)
-{
-	switch (kind)
-	{
-		case '+':
-			flag = true;
-			break;
-		case '-':
-			flag = false;
-			break;
-		default:
-			flag = !flag;
-	}
-}
-
 void Task::mode(Client &c, Server &s)
 {
-	if (args.size() < 2 || args[1].empty()) {
+	if (args.size() < 2 || args[1].size() < 2) {
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
 		return;
 	}
@@ -478,74 +463,76 @@ void Task::mode(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_CHANOPRIVSNEEDED(c.nickname, args[0]));
 		return;
 	}
-	char operation;
-	if (args[1][0] == '+' || args[1][0] == '-')
-	{//if +-[x]
-		if (args[1].size() < 2) {
-			c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
-			return; }
-		operation = args[1][1];
-	}
-	else
-		operation = args[1][0];
-	switch (operation)
+	if (!(args[1][0] == '+' || args[1][0] == '-')) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return; }
+	size_t mode_index = 1;
+	std::vector<std::string>::iterator param = args.begin() + 2;
+	size_t end = args[1].size();
+	while (mode_index < end)
 	{
-		case 'i':
-			_update_flag(chan.isInviteOnly, args[1][0]);
-			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', (chan.isInviteOnly ? "true" : "false")));
-			break;
-		case 't':
-			_update_flag(chan.isTopicCommandOpOnly, args[1][0]);
-			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', (chan.isTopicCommandOpOnly ? "true" : "false")));
-			break;
-		case 'o':
-			if (args.size() < 3) { 
-				c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
-				return; }
-			{
-				std::map<std::string, bool>::iterator target_search = chan.isOperator.find(args[2]);
-				if (target_search == chan.isOperator.end()) {
-					c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, args[2]));
-					return; }
-				_update_flag(target_search->second, args[1][0]);
-			}
-			//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, '0', chan.isTopicCommandOpOnly);
-			//Tengo que aclarar el caso donde la info es del usuario
-				//RPL_UMODEIS existe, pero no tengo del todo claro el mensaje
-			break;
-		case 'k':
-			if ((args[1][0] == '-') || (args[1][0] != '+' && args.size() < 3)) {
-				chan.isPasswordNeeded = false;
-				chan.password.clear();
-				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
-			}
-			else
-			{
-				if (args.size() < 3) {
+		switch (args[1][mode_index])
+		{
+			case 'i':
+				chan.isInviteOnly = (args[1][0] == '+');
+				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', (chan.isInviteOnly ? "true" : "false")));
+				break;
+			case 't':
+				chan.isTopicCommandOpOnly = (args[1][0] == '+');
+				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', (chan.isTopicCommandOpOnly ? "true" : "false")));
+				break;
+			case 'o':
+				if (param == args.end()) { 
 					c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
 					return; }
-				if (chan.isPasswordNeeded)
-					c.AddToWriteBuffer(ERR_KEYSET(c.nickname, chan.name));
-				chan.isPasswordNeeded = true;
-				chan.password = args[2];
-				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
-			}
-			break;
-		case 'l':
-			if (args[1][0] == '-' || (args[1][0] != '+' && args.size() < 3))
-				chan.userLimit = 0;
-			else
-			{
-				if (args.size() < 3) {
-					c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
-					return; }
-				chan.userLimit = std::atol(args[2].c_str());
-			}
-			c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? "to be implemented"/*have our own t_string*/:"(none)"));
-			break;
-		default:
-			c.AddToWriteBuffer(ERR_UNKNOWNMODE(c.nickname, operation));
-			return;
+				{//locality needed
+					std::map<std::string, bool>::iterator target_search = chan.isOperator.find(*param);
+					if (target_search == chan.isOperator.end()) {
+						c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, *param));
+						return; }
+					target_search->second  = (args[1][0] == '+');
+				}
+				++param;
+				//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, '0', chan.isTopicCommandOpOnly);
+				//Tengo que aclarar el caso donde la info es del usuario
+					//RPL_UMODEIS existe, pero no tengo del todo claro el mensaje
+				break;
+			case 'k':
+				if (args[1][0] == '-') {
+					chan.isPasswordNeeded = false;
+					chan.password.clear();
+					c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
+				}
+				else
+				{
+					if (param == args.end()) {
+						c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+						return; }
+					if (chan.isPasswordNeeded)
+						c.AddToWriteBuffer(ERR_KEYSET(c.nickname, chan.name));
+					chan.isPasswordNeeded = true;
+					chan.password = *param;
+					c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
+					++param;
+				}
+				break;
+			case 'l':
+				if (args[1][0] == '-')
+					chan.userLimit = 0;
+				else
+				{
+					if (param == args.end()) {
+						c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+						return; }
+					chan.userLimit = std::atol(args[2].c_str());
+				}
+				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? "to be implemented"/*have our own t_string*/:"(none)")));
+				break;
+			default:
+				c.AddToWriteBuffer(ERR_UNKNOWNMODE(c.nickname, args[1][mode_index]));
+				return;
+		}
+		++mode_index;
 	}
 }
 
