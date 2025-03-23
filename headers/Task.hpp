@@ -55,6 +55,7 @@ class Task
 		void user(Client &c);
         void quit(Client &c, Server &s);
 		void join(Client &c, Server &s);
+		void topic(Client &c, Server &s);
         void privmsg(Client &c, Server &s);
     public:
         Task();

@@ -443,6 +443,37 @@ void Task::kick(Client &c, Server &s)
 	#endif
 }
 
+void Task::topic(Client &c, Server &s)
+{
+	if (args.size() < 1) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return; }
+	std::map<std::string, Channel>::iterator ch_search = s.channels.find(args[0]);
+	if (ch_search == s.channels.end())
+		return;
+	Channel& chan = ch_search->second;
+	std::map<std::string, bool>::iterator user_search = chan.isOperator.find(c.nickname);
+	if (user_search == chan.isOperator.end()) {
+		c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, chan.name));
+		return; }
+
+	if (1 < args.size())
+	{
+		if (chan.isTopicCommandOpOnly && !user_search->second) {
+			c.AddToWriteBuffer(ERR_CHANOPRIVSNEEDED(c.nickname, args[0]));
+			return; }
+		if (args[1].empty())
+			chan.topic.clear();
+		else
+			chan.topic = args[1];
+	}
+
+	if (chan.topic.empty())
+		c.AddToWriteBuffer(RPL_NOTOPIC(c.nickname, args[0]));
+	else
+		c.AddToWriteBuffer(RPL_TOPIC(c.nickname, args[0], chan.topic));
+}
+
 bool Task::run(Client &c, Server &s)
 {
 	#if DEBUG
@@ -480,6 +511,8 @@ bool Task::run(Client &c, Server &s)
 		kick(c, s);
 	else if (cmd == "PART")
 		part(c, s);
+	else if (cmd == "TOPIC")
+		topic(c, s);
 	else if (cmd == "USERS")
 		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
 	else if (cmd == "SUMMON")
