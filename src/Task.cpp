@@ -536,6 +536,36 @@ void Task::mode(Client &c, Server &s)
 	}
 }
 
+void Task::invite(Client &c, Server &s)
+{
+	if (args.size() < 2) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return; }
+	std::map<std::string, Channel>::iterator ch_search = s.channels.find(args[1]);
+	if (ch_search == s.channels.end())
+		return;
+	std::map<std::string, bool>::iterator user_search = ch_search->second.isOperator.find(c.nickname);
+	if (user_search == ch_search->second.isOperator.end()) {
+		c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, ch_search->first));
+		return; }
+	Channel& chan = ch_search->second;
+	if (chan.isInviteOnly && !user_search->second) {
+		c.AddToWriteBuffer(ERR_CHANOPRIVSNEEDED(c.nickname, chan.name));
+		return; }
+	std::map<std::string, Client *>::iterator target_search = s.registered.find(args[0]);
+	if (target_search == s.registered.end()) { 
+		c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, args[0]));
+		return; }
+	if (chan.isOperator.find(args[0]) != chan.isOperator.end()) {
+		c.AddToWriteBuffer(ERR_USERONCHANNEL(c.nickname, args[1], args[0]));
+		return; }
+	chan.invitedUsers.push_front(args[0]);
+//	std::string msg = c.nickname + '!' + c.username + "@localhost INVITE " + args[0] + ' ' + args[1] + "\r\n";
+//	c.AddToWriteBuffer(msg);
+//	target_search->second->AddToWriteBuffer(msg);
+	c.AddToWriteBuffer(RPL_INVITING(c.nickname, args[0], args[1]));
+}
+
 //Returns TRUE when command caused the client to be deleted, false otherwise
 bool Task::run(Client &c, Server &s)
 {
@@ -576,6 +606,8 @@ bool Task::run(Client &c, Server &s)
 		part(c, s);
 	else if (cmd == "MODE")
 		mode(c, s);
+	else if (cmd == "INVITE")
+		invite(c, s);
 	else if (cmd == "USERS")
 		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
 	else if (cmd == "SUMMON")

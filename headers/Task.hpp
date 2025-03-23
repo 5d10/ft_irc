@@ -14,7 +14,7 @@
 
 # define RPL_NOTOPIC(client, chnl) (":localhost 331 " + client + ' ' + chnl + " :No topic is set\r\n")
 # define RPL_TOPIC(client, chnl, topic) (":localhost 332 " + client + ' ' + chnl + " :" + topic + "\r\n")
-
+# define RPL_INVITING(client, nck, chnl) (":localhost 341 " + client + ' ' + nck + ' ' + chnl + "\r\n") //Either hexchat is wrong or the RFC is wrong
 # define RPL_NAMREPLY(client, chnl, lst) (":localhost 353 " + client + ' ' + chnl + " :" + lst + "\r\n")
 # define RPL_ENDOFNAMES(client, chnl) (":localhost 366 " + client + ' ' + chnl + " :End of /NAMES list\r\n")
 
@@ -26,6 +26,7 @@
 # define ERR_NICKCOLLISION(client, nck) (":localhost 436 " + client + ' ' + nck + " :Nickname collision KILL\r\n")
 # define ERR_USERNOTINCHANNEL(client, chnl, nck) (":localhost 441 " + client + ' ' + nck + ' ' + chnl + " :They aren't on that channel\r\n")
 # define ERR_NOTONCHANNEL(client, chnl) (":localhost 442 " + client + ' ' + chnl + " :You're not on that channel\r\n")
+# define ERR_USERONCHANNEL(client, nck, chnl) (":localhost 443 " + client + ' ' + nck + ' ' + chnl + " :is already on channel\r\n")
 # define ERR_SUMMONDISABLED(client) (":localhost 445 " + client + " :SUMMON has been disabled\r\n")
 # define ERR_USERSDISABLED(client) (":localhost 446 " + client + ":USERS has been disabled\r\n")
 # define ERR_NOTREGISTERED(client) (":localhost 451 " + client + " :You have not registered\r\n")
@@ -56,6 +57,7 @@ class Task
 		void part(Client &c, Server &s);
 		void kick(Client &c, Server &s);
 		void mode(Client &c, Server &s);
+		void invite(Client &c, Server &s);
 		void user(Client &c);
         void quit(Client &c, Server &s);
 		void join(Client &c, Server &s);
