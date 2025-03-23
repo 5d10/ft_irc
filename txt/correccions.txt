@@ -9,3 +9,6 @@ Task.cpp
 
 MODE
 > La primera vegada qeu l'utilitza en un canal, no mostra la resposta que enviem (i si, la enviem)
+
+INVITE
+> El client convidat encara no rep la notificació
