@@ -292,7 +292,9 @@ void Task::privmsg(Client &c, Server &s)
 	std::vector<std::string> targets;
 	if (args.size() < 2) {
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PRIVMSG"));
+		return;
 	}
+
 	targets = string_split(args[0], ',');
 	for (size_t i = 0; i < targets.size(); i++)
 	{

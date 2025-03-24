@@ -24,6 +24,11 @@ int main (int argc, char** argv)
 	}
 
 	int port = std::atoi(argv[1]); // potencial error de parsing con los out-of-range y/o cosas que no sean numeros mi rey
+	if (port < 1 || port > 65535)
+	{
+		std::cout << "Given port is invalid or out of range. Aborting." << std::endl;
+		return (1);
+	}
 	Server server(argv[2]);
 	if (-1 == server.init(port)) return (1);
 	std::cout << "Server ready! Listening on port " << port << "..." << std::endl;

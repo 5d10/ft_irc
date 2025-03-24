@@ -1,11 +1,6 @@
-main.cpp
-> atoi argument
-
 Server.cpp
 > EraseClient, remove from channel, i->second->broadcast(quit_message);//? doesn't seem to reflect on client?
 > ::cycle, quan detectem que un socket ha deixat d'estar operatiu, hauriem d'enviar un missatge de QUIT adequat als altres clients
-Task.cpp
-> //! "/ " dona segfault (custom split)
 
 Channel
 > No s'està esborrant al quedar buit
