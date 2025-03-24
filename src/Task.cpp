@@ -58,6 +58,8 @@ void Task::parse(std::string fullCmd)
             fullCmd = fullCmd.substr(newStart, fullCmd.size());
         }
     }
+	if (split.empty())
+		return;
     cmd = split[0];
 	if (lastArgStart != std::string::npos)
 	{
