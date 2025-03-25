@@ -78,6 +78,18 @@ void Task::parse(std::string fullCmd)
 	#endif
 }
 
+bool Task::is_name_valid(std::string name)
+{
+	if (name == "")
+		return (false);
+	for (size_t i = 0; i < name.size(); i++)
+	{
+		if (!std::isalnum(name[i]) && std::string("|^_-{}[]").find(name[i]) == std::string::npos)
+			return false;
+	}
+	return true;
+}
+
 void Task::ping(Client &c)
 {
     if (args.size() != 1)
@@ -137,6 +149,12 @@ void Task::nick(Client &c, Server &s)
 			std::cout << "NICK: no nickname given" << std::endl;
 		#endif
 		c.AddToWriteBuffer(ERR_NONICKNAMEGIVEN(c.nickname));
+		return;
+	}
+
+	if (!is_name_valid(args[0]) || args[0].size() > 9)
+	{
+		c.AddToWriteBuffer(ERR_ERRONEUSNICKNAME(c.nickname, args[0]));
 		return;
 	}
 
@@ -278,12 +296,6 @@ void Task::quit(Client &c, Server &s)
 	#endif
 }
 
-//*Numeric replies
-//*  ERR_NORECIPIENT                 ERR_NOTEXTTOSEND
-//*  ERR_CANNOTSENDTOCHAN            ERR_NOTOPLEVEL
-//*  ERR_WILDTOPLEVEL                ERR_TOOMANYTARGETS
-//*  ERR_NOSUCHNICK
-//*  RPL_AWAY
 void Task::privmsg(Client &c, Server &s)
 {
 	#if DEBUG
@@ -304,6 +316,8 @@ void Task::privmsg(Client &c, Server &s)
 	{
 		if (s.registered.find(targets[i]) != s.registered.end())
 		{
+			if (targets[i] == c.nickname)
+				return;
 			s.registered.at(targets[i])->AddToWriteBuffer(":" + c.nickname + " PRIVMSG " + targets[i] + " :"+ args[1] + "\r\n");
 			continue;
 		}

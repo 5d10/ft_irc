@@ -25,6 +25,7 @@
 # define ERR_NOTEXTTOSEND(client) (":localhost 412 " + client + " :No text to send\r\n")
 # define ERR_UNKNOWNCOMMAND(client, cmd) (":localhost 421 " + client + ' '+ cmd + " :Unknown command\r\n")
 # define ERR_NONICKNAMEGIVEN(client) (":localhost 431 " + client + " :No nickname given\r\n")
+# define ERR_ERRONEUSNICKNAME(client, nck) (":localhost 432 " + client + ' ' + nck + " :Erroneus nickname\r\n")
 # define ERR_NICKNAMEINUSE(client, nck) (":localhost 433 " + client + ' ' + nck + " :Nickname is already in use\r\n")
 # define ERR_NICKCOLLISION(client, nck) (":localhost 436 " + client + ' ' + nck + " :Nickname collision KILL\r\n")
 # define ERR_USERNOTINCHANNEL(client, chnl, nck) (":localhost 441 " + client + ' ' + nck + ' ' + chnl + " :They aren't on that channel\r\n")
@@ -52,7 +53,7 @@ class Task
 
 
         void parse(std::string fullCmd);
-
+        bool is_name_valid(std::string name);
         void ping(Client &c);
 		void pass(Client &c, Server &s);
 		void nick(Client &c, Server &s);

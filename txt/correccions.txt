@@ -9,8 +9,6 @@ General:
 > estandards de nomanclatura (limitar longitud/caracters de noms, etc)
 > El server té problmes gestionant moltes requests en poc temps
 
-Task.cpp
-> privmsg: Add sending message to self edge case (ignore the PRIVMSG)
 MODE
 > La primera vegada qeu l'utilitza en un canal, no mostra la resposta que enviem (i si, la enviem)
 
