@@ -290,8 +290,12 @@ void Task::privmsg(Client &c, Server &s)
 		std::cout << "ENTERING PRIVMSG" << std::endl;
 	#endif
 	std::vector<std::string> targets;
-	if (args.size() < 2) {
-		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PRIVMSG"));
+	if (args.size() == 0) {
+		c.AddToWriteBuffer(ERR_NORECIPIENT(c.nickname, "PRIVMSG"));
+		return;
+	}
+	if (args.size() == 1) {
+		c.AddToWriteBuffer(ERR_NOTEXTTOSEND(c.nickname));
 		return;
 	}
 
@@ -309,6 +313,8 @@ void Task::privmsg(Client &c, Server &s)
 		if (s.channels.find(temp) != s.channels.end()) {
 			if (s.channels.at(temp).isOperator.find(c.nickname) != s.channels.at(temp).isOperator.end())
 				s.channels.at(temp).broadcast(":" + c.nickname + " PRIVMSG " + targets[i] + " :" + args[1] + "\r\n", c.nickname);
+			else
+				c.AddToWriteBuffer(ERR_CANNOTSENDTOCHAN(c.nickname, temp));
 		} else {
 			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, targets[i]));
 		}
