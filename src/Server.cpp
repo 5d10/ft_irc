@@ -225,6 +225,9 @@ int Server::cycle()
 						return out;
 					else if (out == 2) /*bro got deleted*/ {
 						--pollret;
+						#if DEBUG
+							std::cout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," << std::endl;
+						#endif
 						continue;
 					}
 				}
@@ -236,27 +239,37 @@ int Server::cycle()
 				if (current.revents & POLLOUT && client.GetWriteBuffer().length() > 0)
 				{
 					int out = OnClientSend(i);
-					if (out)
-						return out;
+					if (out) {
+						--pollret;
+						--monit_size;
+						#if DEBUG
+							std::cout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," << std::endl;
+						#endif
+						continue;
+					}
 				}
 			}
-			#if DEBUG
-				std::cout << "...................................................................." << std::endl;
-			#endif
 			--pollret;
 			check_pollout:
 			pollfds[i].events = client.GetWriteBuffer().empty() ? pollfds[i].events & ~POLLOUT : pollfds[i].events | POLLOUT;
+			#if DEBUG
+				std::cout << "...................................................................." << std::endl;
+			#endif
 		}
 	//	SetClientPolloutFlags();
 	}
 	std::cout << "Shutting down server..." << std::endl;
+	return (0);//in case we want to return errors
+}
+
+Server::~Server()
+{
 	std::cout << pollfds.size() << std::endl;
 	for (ssize_t i = pollfds.size() - 1; i >= 0; i--)
 	{
 		std::cout << "Disconnecting FD " << pollfds[i].fd << std::endl;
 		EraseClient(getClientAtIndex(i), "Server has been shut down");
 	}
-	return (0);//in case we want to return errors
 }
 
 void Server::SetClientPolloutFlags()
