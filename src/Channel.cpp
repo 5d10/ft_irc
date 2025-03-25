@@ -6,6 +6,7 @@ Channel::Channel(std::string channelName, std::string user, std::map<std::string
 	isPasswordNeeded = false;
 	isInviteOnly = false;
 	isOperator[user] = true;
+	isTopicCommandOpOnly = false;
 	userLimit = 2;
 }
 
