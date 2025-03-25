@@ -4,3 +4,10 @@ Server.cpp
 
 Channel
 > No s'està esborrant al quedar buit
+
+General:
+> estandards de nomanclatura (limitar longitud/caracters de noms, etc)
+> El server té problmes gestionant moltes requests en poc temps
+
+Task.cpp
+> privmsg: Add sending message to self edge case (ignore the PRIVMSG)
