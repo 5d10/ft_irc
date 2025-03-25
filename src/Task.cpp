@@ -58,6 +58,8 @@ void Task::parse(std::string fullCmd)
             fullCmd = fullCmd.substr(newStart, fullCmd.size());
         }
     }
+	if (split.empty())
+		return;
     cmd = split[0];
 	if (lastArgStart != std::string::npos)
 	{
@@ -288,9 +290,15 @@ void Task::privmsg(Client &c, Server &s)
 		std::cout << "ENTERING PRIVMSG" << std::endl;
 	#endif
 	std::vector<std::string> targets;
-	if (args.size() < 2) {
-		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PRIVMSG"));
+	if (args.size() == 0) {
+		c.AddToWriteBuffer(ERR_NORECIPIENT(c.nickname, "PRIVMSG"));
+		return;
 	}
+	if (args.size() == 1) {
+		c.AddToWriteBuffer(ERR_NOTEXTTOSEND(c.nickname));
+		return;
+	}
+
 	targets = string_split(args[0], ',');
 	for (size_t i = 0; i < targets.size(); i++)
 	{
@@ -305,6 +313,8 @@ void Task::privmsg(Client &c, Server &s)
 		if (s.channels.find(temp) != s.channels.end()) {
 			if (s.channels.at(temp).isOperator.find(c.nickname) != s.channels.at(temp).isOperator.end())
 				s.channels.at(temp).broadcast(":" + c.nickname + " PRIVMSG " + targets[i] + " :" + args[1] + "\r\n", c.nickname);
+			else
+				c.AddToWriteBuffer(ERR_CANNOTSENDTOCHAN(c.nickname, temp));
 		} else {
 			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, targets[i]));
 		}
@@ -580,15 +590,25 @@ bool Task::run(Client &c, Server &s)
 	}
 	else if (cmd == "PASS") {
 		pass(c, s);
-	}//! Ain't we missing a goto?
-	else if (cmd == "NICK") {
+	}
+	else if (cmd == "NICK") {\
+		if (!c.passed)
+		{
+			c.AddToWriteBuffer("Can't set nick: Password not validated\r\n");
+			return (false);
+		}
 		nick(c, s);
 		goto validate; }
 	else if (cmd == "USER") {
+		if (!c.passed)
+		{
+			c.AddToWriteBuffer("Can't set username: Password not validated\r\n");
+			return (false);
+		}
 		user(c);
 		goto validate; }
 	else if (!c.registered)
-	{ 
+	{
 		#if DEBUG
 				std::cout << "ANY: not registered" << std::endl;
 		#endif

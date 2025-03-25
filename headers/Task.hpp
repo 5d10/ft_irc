@@ -20,6 +20,9 @@
 
 # define ERR_NOSUCHNICK(client, bad_nickname) (":localhost 401 " + client + ' ' + bad_nickname + " :No such nick/channel\r\n")
 # define ERR_NOSUCHCHANNEL(client, chnl) (":localhost 403 " + client + ' ' + chnl + " :No such channel\r\n")
+# define ERR_CANNOTSENDTOCHAN(client, chnl) (":localhost 404 " + client + ' ' + chnl + " :Cannot send to channel\r\n")
+# define ERR_NORECIPIENT(client, cmd) (":localhost 411 " + client + " :No recipient given(" + cmd + ")\r\n")
+# define ERR_NOTEXTTOSEND(client) (":localhost 412 " + client + " :No text to send\r\n")
 # define ERR_UNKNOWNCOMMAND(client, cmd) (":localhost 421 " + client + ' '+ cmd + " :Unknown command\r\n")
 # define ERR_NONICKNAMEGIVEN(client) (":localhost 431 " + client + " :No nickname given\r\n")
 # define ERR_NICKNAMEINUSE(client, nck) (":localhost 433 " + client + ' ' + nck + " :Nickname is already in use\r\n")
@@ -39,7 +42,6 @@
 # define ERR_INVITEONLYCHAN(client, chnl) (":localhost 473 " + client + ' ' + chnl + " :Cannot join channel (+i)\r\n")
 # define ERR_BADCHANNELKEY(client, chnl) (":localhost 475 " + client + ' ' + chnl + " :Cannot join channel (+k)\r\n")
 # define ERR_CHANOPRIVSNEEDED(client, chnl) (":localhost 482 " + client + ' ' + chnl + " :You're not channel operator\r\n")
-
 class Server;
 
 class Task
