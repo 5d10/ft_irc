@@ -461,14 +461,24 @@ bool Task::run(Client &c, Server &s)
 	else if (cmd == "PASS") {
 		pass(c, s);
 	}
-	else if (cmd == "NICK") {
+	else if (cmd == "NICK") {\
+		if (!c.passed)
+		{
+			c.AddToWriteBuffer("Can't set nick: Password not validated\r\n");
+			return (false);
+		}
 		nick(c, s);
 		goto validate; }
 	else if (cmd == "USER") {
+		if (!c.passed)
+		{
+			c.AddToWriteBuffer("Can't set username: Password not validated\r\n");
+			return (false);
+		}
 		user(c);
 		goto validate; }
 	else if (!c.registered)
-	{ 
+	{
 		#if DEBUG
 				std::cout << "ANY: not registered" << std::endl;
 		#endif
