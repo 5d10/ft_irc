@@ -58,6 +58,8 @@ void Task::parse(std::string fullCmd)
             fullCmd = fullCmd.substr(newStart, fullCmd.size());
         }
     }
+	if (split.empty())
+		return;
     cmd = split[0];
 	if (lastArgStart != std::string::npos)
 	{
@@ -181,7 +183,7 @@ void Task::join(Client &c, Server &s)
 	std::vector<std::string> joining = string_split(args[0], ',');
 	std::vector<std::string> passwords;
 	if (1 < args.size())
-		passwords = string_split(args[1], ',');//consecutive ',' generate many entries, which we want
+		 passwords = string_split(args[1], ',');//consecutive ',' generate many entries, which we want
 	unsigned int i = joining.size();
 	while (i--)
 	{
@@ -288,9 +290,15 @@ void Task::privmsg(Client &c, Server &s)
 		std::cout << "ENTERING PRIVMSG" << std::endl;
 	#endif
 	std::vector<std::string> targets;
-	if (args.size() < 2) {
-		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, "PRIVMSG"));
+	if (args.size() == 0) {
+		c.AddToWriteBuffer(ERR_NORECIPIENT(c.nickname, "PRIVMSG"));
+		return;
 	}
+	if (args.size() == 1) {
+		c.AddToWriteBuffer(ERR_NOTEXTTOSEND(c.nickname));
+		return;
+	}
+
 	targets = string_split(args[0], ',');
 	for (size_t i = 0; i < targets.size(); i++)
 	{
@@ -305,6 +313,8 @@ void Task::privmsg(Client &c, Server &s)
 		if (s.channels.find(temp) != s.channels.end()) {
 			if (s.channels.at(temp).isOperator.find(c.nickname) != s.channels.at(temp).isOperator.end())
 				s.channels.at(temp).broadcast(":" + c.nickname + " PRIVMSG " + targets[i] + " :" + args[1] + "\r\n", c.nickname);
+			else
+				c.AddToWriteBuffer(ERR_CANNOTSENDTOCHAN(c.nickname, temp));
 		} else {
 			c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, targets[i]));
 		}
@@ -474,6 +484,130 @@ void Task::topic(Client &c, Server &s)
 		c.AddToWriteBuffer(RPL_TOPIC(c.nickname, args[0], chan.topic));
 }
 
+void Task::mode(Client &c, Server &s)
+{
+	if (args.size() < 2 || args[1].size() < 2) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return;
+	}
+	std::map<std::string, Channel>::iterator ch_search = s.channels.find(args[0]);
+	if (ch_search == s.channels.end()) {
+		c.AddToWriteBuffer(ERR_NOSUCHCHANNEL(c.nickname, args[0]));
+		return;
+	}
+	Channel& chan = ch_search->second;
+	std::map<std::string, bool>::iterator user_search = chan.isOperator.find(c.nickname);
+	if (user_search == chan.isOperator.end()) {
+		c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, args[0]));
+		return; }
+	if (!user_search->second) {
+		c.AddToWriteBuffer(ERR_CHANOPRIVSNEEDED(c.nickname, args[0]));
+		return;
+	}
+	if (!(args[1][0] == '+' || args[1][0] == '-')) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return; }
+	size_t mode_index = 1;
+	std::vector<std::string>::iterator param = args.begin() + 2;
+	size_t end = args[1].size();
+	while (mode_index < end)
+	{
+		switch (args[1][mode_index])
+		{
+			case 'i':
+				chan.isInviteOnly = (args[1][0] == '+');
+				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', (chan.isInviteOnly ? "true" : "false")));
+				break;
+			case 't':
+				chan.isTopicCommandOpOnly = (args[1][0] == '+');
+				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', (chan.isTopicCommandOpOnly ? "true" : "false")));
+				break;
+			case 'o':
+				if (param == args.end()) { 
+					c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+					return; }
+				{//locality needed
+					std::map<std::string, bool>::iterator target_search = chan.isOperator.find(*param);
+					if (target_search == chan.isOperator.end()) {
+						c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, *param));
+						return; }
+					target_search->second  = (args[1][0] == '+');
+				}
+				++param;
+				//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, '0', chan.isTopicCommandOpOnly);
+				//Tengo que aclarar el caso donde la info es del usuario
+					//RPL_UMODEIS existe, pero no tengo del todo claro el mensaje
+				break;
+			case 'k':
+				if (args[1][0] == '-') {
+					chan.isPasswordNeeded = false;
+					chan.password.clear();
+					c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
+				}
+				else
+				{
+					if (param == args.end()) {
+						c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+						return; }
+					if (chan.isPasswordNeeded)
+						c.AddToWriteBuffer(ERR_KEYSET(c.nickname, chan.name));
+					chan.isPasswordNeeded = true;
+					chan.password = *param;
+					c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
+					++param;
+				}
+				break;
+			case 'l':
+				if (args[1][0] == '-')
+					chan.userLimit = 0;
+				else
+				{
+					if (param == args.end()) {
+						c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+						return; }
+					chan.userLimit = std::atol(args[2].c_str());
+				}
+				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? "to be implemented"/*have our own t_string*/:"(none)")));
+				break;
+			default:
+				c.AddToWriteBuffer(ERR_UNKNOWNMODE(c.nickname, args[1][mode_index]));
+				return;
+		}
+		++mode_index;
+	}
+}
+
+void Task::invite(Client &c, Server &s)
+{
+	if (args.size() < 2) {
+		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
+		return; }
+	std::map<std::string, Channel>::iterator ch_search = s.channels.find(args[1]);
+	if (ch_search == s.channels.end())
+		return;
+	std::map<std::string, bool>::iterator user_search = ch_search->second.isOperator.find(c.nickname);
+	if (user_search == ch_search->second.isOperator.end()) {
+		c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, ch_search->first));
+		return; }
+	Channel& chan = ch_search->second;
+	if (chan.isInviteOnly && !user_search->second) {
+		c.AddToWriteBuffer(ERR_CHANOPRIVSNEEDED(c.nickname, chan.name));
+		return; }
+	std::map<std::string, Client *>::iterator target_search = s.registered.find(args[0]);
+	if (target_search == s.registered.end()) { 
+		c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, args[0]));
+		return; }
+	if (chan.isOperator.find(args[0]) != chan.isOperator.end()) {
+		c.AddToWriteBuffer(ERR_USERONCHANNEL(c.nickname, args[1], args[0]));
+		return; }
+	chan.invitedUsers.push_front(args[0]);
+//	std::string msg = c.nickname + '!' + c.username + "@localhost INVITE " + args[0] + ' ' + args[1] + "\r\n";
+//	c.AddToWriteBuffer(msg);
+//	target_search->second->AddToWriteBuffer(msg);
+	c.AddToWriteBuffer(RPL_INVITING(c.nickname, args[0], args[1]));
+}
+
+//Returns TRUE when command caused the client to be deleted, false otherwise
 bool Task::run(Client &c, Server &s)
 {
 	#if DEBUG
@@ -488,14 +622,24 @@ bool Task::run(Client &c, Server &s)
 	else if (cmd == "PASS") {
 		pass(c, s);
 	}
-	else if (cmd == "NICK") {
+	else if (cmd == "NICK") {\
+		if (!c.passed)
+		{
+			c.AddToWriteBuffer("Can't set nick: Password not validated\r\n");
+			return (false);
+		}
 		nick(c, s);
 		goto validate; }
 	else if (cmd == "USER") {
+		if (!c.passed)
+		{
+			c.AddToWriteBuffer("Can't set username: Password not validated\r\n");
+			return (false);
+		}
 		user(c);
 		goto validate; }
 	else if (!c.registered)
-	{ 
+	{
 		#if DEBUG
 				std::cout << "ANY: not registered" << std::endl;
 		#endif
@@ -513,6 +657,10 @@ bool Task::run(Client &c, Server &s)
 		part(c, s);
 	else if (cmd == "TOPIC")
 		topic(c, s);
+	else if (cmd == "MODE")
+		mode(c, s);
+	else if (cmd == "INVITE")
+		invite(c, s);
 	else if (cmd == "USERS")
 		c.AddToWriteBuffer(ERR_USERSDISABLED(c.nickname));
 	else if (cmd == "SUMMON")
@@ -521,6 +669,7 @@ bool Task::run(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_UNKNOWNCOMMAND(c.nickname, cmd));
 	return (false);
 
+	//tbh this could be a method of Client
 	validate:
 	if (!c.registered && c.passed && c.nicked && c.usernamed)
 	{
@@ -538,6 +687,7 @@ bool Task::run(Client &c, Server &s)
 	return (false);
 }
 
+//This will make me cry -G
 bool Task::run(std::string fullCmd, Client &c, Server &s)
 {
     return (Task(fullCmd).run(c, s));
