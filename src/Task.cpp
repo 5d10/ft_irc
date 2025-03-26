@@ -516,11 +516,11 @@ void Task::mode(Client &c, Server &s)
 		{
 			case 'i':
 				chan.isInviteOnly = (args[1][0] == '+');
-				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', (chan.isInviteOnly ? "true" : "false")));
+				ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', (chan.isInviteOnly ? "true" : "false")));
 				break;
 			case 't':
 				chan.isTopicCommandOpOnly = (args[1][0] == '+');
-				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', (chan.isTopicCommandOpOnly ? "true" : "false")));
+				ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', (chan.isTopicCommandOpOnly ? "true" : "false")));
 				break;
 			case 'o':
 				if (param == args.end()) { 
@@ -542,7 +542,7 @@ void Task::mode(Client &c, Server &s)
 				if (args[1][0] == '-') {
 					chan.isPasswordNeeded = false;
 					chan.password.clear();
-					c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
+					ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
 				}
 				else
 				{
@@ -553,7 +553,7 @@ void Task::mode(Client &c, Server &s)
 						c.AddToWriteBuffer(ERR_KEYSET(c.nickname, chan.name));
 					chan.isPasswordNeeded = true;
 					chan.password = *param;
-					c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
+					ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
 					++param;
 				}
 				break;
@@ -567,7 +567,7 @@ void Task::mode(Client &c, Server &s)
 						return; }
 					chan.userLimit = std::atol(args[2].c_str());
 				}
-				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? "to be implemented"/*have our own t_string*/:"(none)")));
+				ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? "to be implemented"/*have our own t_string*/:"(none)")));
 				break;
 			default:
 				c.AddToWriteBuffer(ERR_UNKNOWNMODE(c.nickname, args[1][mode_index]));

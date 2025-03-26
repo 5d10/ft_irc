@@ -4,6 +4,8 @@ Server.cpp
 
 MODE
 > La primera vegada qeu l'utilitza en un canal, no mostra la resposta que enviem (i si, la enviem)
+> No enviem la resposta als clients que no han fet el canvi fins que quests fan PING
+> > S'hauria de fer merge de la branca single_read_multi_command avans d'intentar arreglar
 
 INVITE
 > El client convidat encara no rep la notificació
