@@ -88,7 +88,7 @@ void Server::EraseClient(Client &client, std::string quit_message)
 	std::list<Client>::iterator it = clients.begin();
 	std::list<Client>::iterator end = clients.end();
 
-	while (it != end && it->nickname != client.nickname)
+	while (it != end && it->fd != client.fd)
 	{//search the client first
 		i++;
 		it++;
@@ -102,7 +102,10 @@ void Server::EraseClient(Client &client, std::string quit_message)
 		return;
 	}
 	//then delete it
-	close(pollfds[i].fd);
+	#if DEBUG
+		std::cout << "Erase: closing fd " << pollfds[i].fd << std::endl;
+	#endif
+	close(it->fd);
 	pollfds.erase(pollfds.begin() + i);
 	registered.erase(client.nickname);
 	clients.erase(it);

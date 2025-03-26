@@ -8,7 +8,6 @@ class Channel;
 class Client
 {
     private:
-        int fd;
         std::string rd_buff;
         std::string wr_buff;
         Client();
@@ -20,6 +19,7 @@ class Client
 		bool passed;
 		bool nicked;
 		bool usernamed;
+        int fd; //Y si te molesta que se pueda tocar, hazlo const
 		std::string nickname;
 		std::string username;
 		std::string realname;
