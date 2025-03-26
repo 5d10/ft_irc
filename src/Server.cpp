@@ -144,10 +144,9 @@ int Server::OnClientRead(size_t index)
 	}
 	else if (bytes_read > 0)
 	{
-		bool deleted = Task::run(client.GetReadBuffer(), client, *this);
-		if (!deleted)
-			client.ClearReadBuffer();
-		else return(2);
+		bool deleted = Task::run(client.GetNextCmd(), client, *this);
+		if (deleted)
+			return(2);
 	}
 	return (0);
 }

@@ -60,9 +60,20 @@ const std::string &Client::GetWriteBuffer() const
 	return wr_buff;
 }
 
-void Client::ClearReadBuffer()
+//void Client::ClearReadBuffer()
+//{
+//	rd_buff = "";
+//}
+
+const std::string Client::GetNextCmd()
 {
-	rd_buff = "";
+	size_t end = rd_buff.find("\r\n");
+	if (end == std::string::npos)
+		return ("");
+
+	std::string cmd = rd_buff.substr(0, end);
+	rd_buff.erase(0, end + 2);
+	return (cmd);
 }
 
 void Client::AddToWriteBuffer(std::string msg)

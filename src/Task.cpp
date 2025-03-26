@@ -34,7 +34,6 @@ void Task::parse(std::string fullCmd)
 	std::size_t lastArgStart = fullCmd.find(" :");
 	std::string lastArg;
 
-	fullCmd.resize(fullCmd.size() - 2);
 
 	if (lastArgStart != std::string::npos) {
 		lastArg = fullCmd.substr(lastArgStart + 2);
@@ -610,6 +609,8 @@ void Task::invite(Client &c, Server &s)
 //Returns TRUE when command caused the client to be deleted, false otherwise
 bool Task::run(Client &c, Server &s)
 {
+	if (cmd.empty())
+		return (false);
 	#if DEBUG
 		std::cout << "Task client: " << c.nickname << std::endl;
 	#endif

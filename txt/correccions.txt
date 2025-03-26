@@ -7,3 +7,9 @@ MODE
 
 INVITE
 > El client convidat encara no rep la notificació
+
+Netcat
+ctrl+c
+
+Client
+> Limita la mida dels buffers (o que no peti si arriben a la máxima que quep a size_)
