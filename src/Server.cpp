@@ -191,9 +191,9 @@ int Server::cycle()
 			std::cerr << "Poll Errno: " << errno << std::endl;
 			return (-1);
 		}
+		if (!pollret) continue;
 		#if DEBUG
-			if (0 < pollret)
-				std::cout << "--------------------------------------------------------------------" << std::endl;
+			std::cout << "--------------------------------------------------------------------" << std::endl;
 		#endif
 		for	(size_t i = 0; i < monit_size && pollret > 0; i++)
 		{
@@ -204,7 +204,13 @@ int Server::cycle()
 				std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;
 			#endif
 
-			if (!(current.revents & current.events)) goto check_pollout;
+			if (!(current.revents & current.events))
+			{
+				#if DEBUG
+					std::cout << "...................................................................." << std::endl;
+				#endif
+				continue;
+			}
 
 			#if DEBUG
 				std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
@@ -253,13 +259,13 @@ int Server::cycle()
 				}
 			}
 			--pollret;
-			check_pollout:
-			pollfds[i].events = client.GetWriteBuffer().empty() ? pollfds[i].events & ~POLLOUT : pollfds[i].events | POLLOUT;
+			//check_pollout:
+			//pollfds[i].events = client.GetWriteBuffer().empty() ? pollfds[i].events & ~POLLOUT : pollfds[i].events | POLLOUT;
 			#if DEBUG
 				std::cout << "...................................................................." << std::endl;
 			#endif
 		}
-	//	SetClientPolloutFlags();
+		SetClientPolloutFlags();
 	}
 	std::cout << "Shutting down server..." << std::endl;
 	return (0);//in case we want to return errors

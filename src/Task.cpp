@@ -601,10 +601,11 @@ void Task::invite(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_USERONCHANNEL(c.nickname, args[1], args[0]));
 		return; }
 	chan.invitedUsers.push_front(args[0]);
-//	std::string msg = c.nickname + '!' + c.username + "@localhost INVITE " + args[0] + ' ' + args[1] + "\r\n";
+	std::string msg = c.nickname + '!' + c.username + "@localhost INVITE " + args[0] + ' ' + args[1] + "\r\n";
+	target_search->second->AddToWriteBuffer(msg);
 //	c.AddToWriteBuffer(msg);
-//	target_search->second->AddToWriteBuffer(msg);
 	c.AddToWriteBuffer(RPL_INVITING(c.nickname, args[0], args[1]));
+//	target_search->second->AddToWriteBuffer(RPL_INVITING(c.nickname, args[0], args[1]));
 }
 
 //Returns TRUE when command caused the client to be deleted, false otherwise
