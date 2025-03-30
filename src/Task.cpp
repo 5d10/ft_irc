@@ -537,11 +537,13 @@ void Task::mode(Client &c, Server &s)
 						c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, *param));
 						return; }
 					target_search->second  = (args[1][0] == '+');
-				}
-				++param;
 				//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'o', target_search->second ? "true" : "false");
 				//Tengo que aclarar el caso donde la info es del usuario
 					//RPL_UMODEIS existe, pero no tengo del todo claro el mensaje
+					//s.registered.at(*param)->AddToWriteBuffer(RPL_UMODEIS(*param, (target_search->second ? std::string("o") : std::string("(none)"))));
+						//Cannot distinguish channel
+				}
+				++param;
 				break;
 			case 'k':
 				if (args[1][0] == '-') {
