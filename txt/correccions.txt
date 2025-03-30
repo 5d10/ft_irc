@@ -4,6 +4,3 @@ Server.cpp
 
 MODE
 > l no té el "itoa" corresponent
-
-INVITE
-> El client convidat encara no rep la notificació
