@@ -4,8 +4,6 @@ Server.cpp
 
 MODE
 > l no té el "itoa" corresponent
-> No enviem la resposta als clients que no han fet el canvi fins que quests fan PING
-> > S'hauria de fer merge de la branca single_read_multi_command avans d'intentar arreglar
 
 INVITE
 > El client convidat encara no rep la notificació
