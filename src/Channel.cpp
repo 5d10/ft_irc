@@ -157,3 +157,18 @@ void Channel::Rename(std::string old_name, std::string new_name)
 		}
 	}
 }
+
+std::string Channel::getModes(void) const
+{
+	std::string mds;
+
+	if (isInviteOnly)
+		mds += 'i';
+	if (isTopicCommandOpOnly)
+		mds += 't';
+	if (0 < userLimit)
+		mds += 'l';
+	if (isPasswordNeeded)
+		mds += 'k';
+	return (mds);
+}

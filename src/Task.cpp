@@ -486,7 +486,7 @@ void Task::topic(Client &c, Server &s)
 
 void Task::mode(Client &c, Server &s)
 {
-	if (args.size() < 2 || args[1].size() < 2) {
+	if (args.size() == 0 || (1 < args.size() && args[1].size() < 2)) {
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
 		return;
 	}
@@ -496,6 +496,11 @@ void Task::mode(Client &c, Server &s)
 		return;
 	}
 	Channel& chan = ch_search->second;
+	if (args.size() == 1) {
+		c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, chan.getModes(), ""));
+		return;
+	}
+
 	std::map<std::string, bool>::iterator user_search = chan.isOperator.find(c.nickname);
 	if (user_search == chan.isOperator.end()) {
 		c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, args[0]));
