@@ -539,7 +539,7 @@ void Task::mode(Client &c, Server &s)
 					target_search->second  = (args[1][0] == '+');
 				}
 				++param;
-				//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, '0', chan.isTopicCommandOpOnly);
+				//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'o', target_search->second ? "true" : "false");
 				//Tengo que aclarar el caso donde la info es del usuario
 					//RPL_UMODEIS existe, pero no tengo del todo claro el mensaje
 				break;
@@ -572,7 +572,7 @@ void Task::mode(Client &c, Server &s)
 						return; }
 					chan.userLimit = std::atol(args[2].c_str());
 				}
-				ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? "to be implemented"/*have our own t_string*/:"(none)")));
+				ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? args[2] :"(none)")));
 				break;
 			default:
 				c.AddToWriteBuffer(ERR_UNKNOWNMODE(c.nickname, args[1][mode_index]));
