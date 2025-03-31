@@ -2,6 +2,7 @@ NAME = ircserv
 
 SRC_DIR = src
 OBJ_DIR = obj
+HEAD_DIR = headers/
 
 CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic-errors -I headers/
@@ -17,10 +18,21 @@ SRC = 	main.cpp \
 		Task.cpp \
 		utils.cpp\
 
+HEAD =	Channel.hpp \
+		Channels_list.hpp \
+		Channels_vector.hpp \
+		Client.hpp \
+		Colors.h \
+		ft_irc.hpp \
+		Server.hpp \
+		Task.hpp \
+		utils.hpp
+
 OBJ = $(SRC:%.cpp=${OBJ_DIR}/%.o)
 DEP = $(SRC:%.cpp=${OBJ_DIR}/%.d)
+HEADS = $(addprefix $(HEAD_DIR), $(HEAD))
 
-all: $(NAME)
+all: $(NAME) $(HEADS)
 
 $(NAME): Makefile $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(NAME)
