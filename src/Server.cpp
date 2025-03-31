@@ -49,7 +49,7 @@ int Server::initialize_listener(const int port)
 
 	if (-1 == listen(listener, MAX_CONN_QUEUE))
 		return (-1);
-	return (listener);	
+	return (listener);
 }
 
 void Server::AddClient(int fd, short flags)

@@ -80,7 +80,7 @@ void Task::parse(std::string fullCmd)
 
 bool Task::is_name_valid(std::string name)
 {
-	if (name == "")
+	if (name == "" || !isalpha(name[0]))
 		return (false);
 	for (size_t i = 0; i < name.size(); i++)
 	{
@@ -187,6 +187,9 @@ void Task::user(Client &c)
 	if (args.size() < 4) {
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
 		return; }
+	if (!is_name_valid(args[0]) || args[0].size() > 9) {
+		c.AddToWriteBuffer("Erroneus username\r\n");
+		return;}
 	c.username = args[0];
 	c.realname = args[3];
 	c.usernamed = true;
