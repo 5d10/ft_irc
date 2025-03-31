@@ -88,7 +88,7 @@ void Server::EraseClient(Client &client, std::string quit_message)
 	std::list<Client>::iterator it = clients.begin();
 	std::list<Client>::iterator end = clients.end();
 
-	while (it != end && it->nickname != client.nickname)
+	while (it != end && it->fd != client.fd)
 	{//search the client first
 		i++;
 		it++;
@@ -102,7 +102,10 @@ void Server::EraseClient(Client &client, std::string quit_message)
 		return;
 	}
 	//then delete it
-	close(pollfds[i].fd);
+	#if DEBUG
+		std::cout << "Erase: closing fd " << pollfds[i].fd << std::endl;
+	#endif
+	close(it->fd);
 	pollfds.erase(pollfds.begin() + i);
 	registered.erase(client.nickname);
 	clients.erase(it);
@@ -188,20 +191,33 @@ int Server::cycle()
 			std::cerr << "Poll Errno: " << errno << std::endl;
 			return (-1);
 		}
+		if (!pollret) continue;
+		#if DEBUG
+			std::cout << "--------------------------------------------------------------------" << std::endl;
+		#endif
 		for	(size_t i = 0; i < monit_size && pollret > 0; i++)
 		{
-			struct pollfd current = pollfds[i];
+			struct pollfd& current = pollfds[i];
 			Client &client = getClientAtIndex(i);
 
 			#if DEBUG
 				std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;
 			#endif
 
-			if (!(current.revents & current.events)) continue;
+			if (!(current.revents & current.events))
+			{
+				#if DEBUG
+					std::cout << "...................................................................." << std::endl;
+				#endif
+				continue;
+			}
 
 			#if DEBUG
-				std::cout << "--------------------------------------------------------------------" << std::endl;
 				std::cout << "Potential activity on monitored[" << i << "], fd " << current.fd << std::endl;
+				if (current.revents & POLLNVAL)
+					std::cout << "- POLLNVAL" << std::endl;
+				if (current.revents & POLLHUP)
+					std::cout << "- POLLHUP" << std::endl;
 				std::cout << "[REVENTS] (Raw Value: " << current.revents << ")" << std::endl;
 			#endif
 			if (i == 0 && (current.revents & current.events)) //listener will always be [0]
@@ -216,53 +232,64 @@ int Server::cycle()
 					int out = OnClientRead(i);
 					if (out == 1)
 						return out;
-					else if (out == 2) {
+					else if (out == 2) /*bro got deleted*/ {
 						--pollret;
+						#if DEBUG
+							std::cout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," << std::endl;
+						#endif
 						continue;
 					}
 				}
 				#if DEBUG
-					std::cout << (current.revents & current.events & POLLOUT)
-						<< ' ' << (client.GetWriteBuffer().length() > 0) << std::endl;
+					if (current.revents & POLLOUT)
+						std::cout << "- POLLOUT" << '\n';
+					std::cout << "Size in buffer = " << client.GetWriteBuffer().length() << std::endl;
 				#endif
-				if (current.revents & current.events & POLLOUT && client.GetWriteBuffer().length() > 0)
+				if (current.revents & POLLOUT && client.GetWriteBuffer().length() > 0)
 				{
 					int out = OnClientSend(i);
-					if (out)
-						return out;
+					if (out) {
+						--pollret;
+						--monit_size;
+						#if DEBUG
+							std::cout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," << std::endl;
+						#endif
+						continue;
+					}
 				}
 			}
+			--pollret;
+			//check_pollout:
+			//pollfds[i].events = client.GetWriteBuffer().empty() ? pollfds[i].events & ~POLLOUT : pollfds[i].events | POLLOUT;
 			#if DEBUG
-				if (current.revents & POLLOUT)
-					std::cout << "- POLLOUT" << std::endl;
-				if (current.revents & POLLNVAL)
-					std::cout << "- POLLNVAL" << std::endl;
-				if (current.revents & POLLHUP)
-					std::cout << "- POLLHUP" << std::endl;
-				std::cout << "--------------------------------------------------------------------" << std::endl;
+				std::cout << "...................................................................." << std::endl;
 			#endif
-			current.revents = 0; // reset revents
-			pollret--;
 		}
 		SetClientPolloutFlags();
 	}
 	std::cout << "Shutting down server..." << std::endl;
+	return (0);//in case we want to return errors
+}
+
+Server::~Server()
+{
 	std::cout << pollfds.size() << std::endl;
 	for (ssize_t i = pollfds.size() - 1; i >= 0; i--)
 	{
 		std::cout << "Disconnecting FD " << pollfds[i].fd << std::endl;
 		EraseClient(getClientAtIndex(i), "Server has been shut down");
 	}
-	return (0);//in case we want to return errors
 }
 
 void Server::SetClientPolloutFlags()
-{
+{//no longer used
 	size_t i;
 	std::list<Client>::iterator it;
 	for (i = 0, it = clients.begin(); i < pollfds.size() && it != clients.end(); i++, it++)
 		if (!it->GetWriteBuffer().empty())
-				pollfds[i].events |= POLLOUT;
+			pollfds[i].events |= POLLOUT;
+		else
+			pollfds[i].events &= ~POLLOUT;
 }
 
 Client &Server::getClientAtIndex(size_t index)

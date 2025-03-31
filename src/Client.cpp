@@ -118,6 +118,25 @@ ssize_t Client::Read()
 
 ssize_t Client::Send()
 {
+	/*This should be faster but as of now it would fuck up when wr_buffer.size() (unsigned long int) > ssize_t (signed long int)*/
+	//std::cout << COLOR_CYAN << "[SERVER] >> Write to FD " << fd << COLOR_NONE << std::endl;
+	//print_buffer(wr_buff);
+	//const char* buffer = wr_buff.c_str();
+	//ssize_t out = send(fd, buffer, wr_buff.size()*sizeof(char), MSG_DONTWAIT);
+	//if (0 < out)
+	//{
+	//	if (out == static_cast<ssize_t>(wr_buff.size()))
+	//		wr_buff.clear();
+	//	else
+	//		wr_buff.erase(0, out);
+	//}
+	//if (wr_buff.length() > 0)
+	//{
+	//	std::cout << COLOR_RED << "WARNING: Buffer not empty after write to FD " << fd << "!" << COLOR_NONE << std::endl;
+	//	print_buffer(wr_buff);
+	//}
+	//return out;
+
 	std::cout << COLOR_CYAN << "[SERVER] >> Write to FD " << fd << COLOR_NONE << std::endl;
 	print_buffer(wr_buff);
 	char buffer[1];
@@ -127,9 +146,9 @@ ssize_t Client::Send()
 	{
 		if (wr_buff.length() > 1)
 		{
-			wr_buff = wr_buff.substr(1);
+			wr_buff = wr_buff.erase(0, 1);
 			buffer[0] = wr_buff.c_str()[0];
-			send(fd, buffer, sizeof(buffer), MSG_DONTWAIT);
+			out = send(fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 		}
 		else { wr_buff = ""; }
 	}

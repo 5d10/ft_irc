@@ -503,7 +503,7 @@ void Task::topic(Client &c, Server &s)
 
 void Task::mode(Client &c, Server &s)
 {
-	if (args.size() < 2 || args[1].size() < 2) {
+	if (args.size() == 0 || (1 < args.size() && args[1].size() < 2)) {
 		c.AddToWriteBuffer(ERR_NEEDMOREPARAMS(c.nickname, cmd));
 		return;
 	}
@@ -513,6 +513,11 @@ void Task::mode(Client &c, Server &s)
 		return;
 	}
 	Channel& chan = ch_search->second;
+	if (args.size() == 1) {
+		c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, chan.getModes(), ""));
+		return;
+	}
+
 	std::map<std::string, bool>::iterator user_search = chan.isOperator.find(c.nickname);
 	if (user_search == chan.isOperator.end()) {
 		c.AddToWriteBuffer(ERR_NOTONCHANNEL(c.nickname, args[0]));
@@ -533,11 +538,11 @@ void Task::mode(Client &c, Server &s)
 		{
 			case 'i':
 				chan.isInviteOnly = (args[1][0] == '+');
-				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', (chan.isInviteOnly ? "true" : "false")));
+				ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'i', (chan.isInviteOnly ? "true" : "false")));
 				break;
 			case 't':
 				chan.isTopicCommandOpOnly = (args[1][0] == '+');
-				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', (chan.isTopicCommandOpOnly ? "true" : "false")));
+				ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 't', (chan.isTopicCommandOpOnly ? "true" : "false")));
 				break;
 			case 'o':
 				if (param == args.end()) { 
@@ -549,17 +554,19 @@ void Task::mode(Client &c, Server &s)
 						c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, *param));
 						return; }
 					target_search->second  = (args[1][0] == '+');
-				}
-				++param;
-				//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, '0', chan.isTopicCommandOpOnly);
+				//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'o', target_search->second ? "true" : "false");
 				//Tengo que aclarar el caso donde la info es del usuario
 					//RPL_UMODEIS existe, pero no tengo del todo claro el mensaje
+					//s.registered.at(*param)->AddToWriteBuffer(RPL_UMODEIS(*param, (target_search->second ? std::string("o") : std::string("(none)"))));
+						//Cannot distinguish channel
+				}
+				++param;
 				break;
 			case 'k':
 				if (args[1][0] == '-') {
 					chan.isPasswordNeeded = false;
 					chan.password.clear();
-					c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
+					ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
 				}
 				else
 				{
@@ -570,7 +577,7 @@ void Task::mode(Client &c, Server &s)
 						c.AddToWriteBuffer(ERR_KEYSET(c.nickname, chan.name));
 					chan.isPasswordNeeded = true;
 					chan.password = *param;
-					c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
+					ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
 					++param;
 				}
 				break;
@@ -584,7 +591,7 @@ void Task::mode(Client &c, Server &s)
 						return; }
 					chan.userLimit = std::atol(args[2].c_str());
 				}
-				c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? "to be implemented"/*have our own t_string*/:"(none)")));
+				ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'l', (chan.userLimit ? args[2] :"(none)")));
 				break;
 			default:
 				c.AddToWriteBuffer(ERR_UNKNOWNMODE(c.nickname, args[1][mode_index]));
@@ -618,9 +625,9 @@ void Task::invite(Client &c, Server &s)
 		c.AddToWriteBuffer(ERR_USERONCHANNEL(c.nickname, args[1], args[0]));
 		return; }
 	chan.invitedUsers.push_front(args[0]);
-//	std::string msg = c.nickname + '!' + c.username + "@localhost INVITE " + args[0] + ' ' + args[1] + "\r\n";
-//	c.AddToWriteBuffer(msg);
-//	target_search->second->AddToWriteBuffer(msg);
+	std::string msg = ':' + c.nickname + '!' + c.username + "@localhost INVITE " + args[0] + ' ' + args[1] + "\r\n";
+	target_search->second->AddToWriteBuffer(msg);
+	c.AddToWriteBuffer(msg);
 	c.AddToWriteBuffer(RPL_INVITING(c.nickname, args[0], args[1]));
 }
 

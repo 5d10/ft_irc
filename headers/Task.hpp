@@ -11,6 +11,7 @@
 # define RPL_LUSERCLIENT(client, nusr) (":localhost 251 " + client + " :There are " + nusr + " users and 0 invisible on 1 servers\r\n")
 # define RPL_LUSRME(client, nusr) (":localhost 255 " + client + " :I have " + nusr + " clients and 0 servers\r\n")
 # define RPL_CHANNELMODEIS(client, chn, mode, params) (":localhost 324 " + client + ' ' + chn + ' ' + mode + ' ' + params + "\r\n")
+# define RPL_UMODEIS(client, mode) (":localhost 221 " + client + ' ' + mode + "\r\n")
 
 # define RPL_NOTOPIC(client, chnl) (":localhost 331 " + client + ' ' + chnl + " :No topic is set\r\n")
 # define RPL_TOPIC(client, chnl, topic) (":localhost 332 " + client + ' ' + chnl + " :" + topic + "\r\n")

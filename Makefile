@@ -19,8 +19,6 @@ SRC = 	main.cpp \
 		utils.cpp\
 
 HEAD =	Channel.hpp \
-		Channels_list.hpp \
-		Channels_vector.hpp \
 		Client.hpp \
 		Colors.h \
 		ft_irc.hpp \

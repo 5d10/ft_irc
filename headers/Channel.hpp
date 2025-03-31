@@ -36,6 +36,7 @@ class Channel
         void broadcast(std::string msg, std::string sender) const;
         static bool isValidChannelName(std::string name);
 		void Rename(std::string old_name, std::string new_name);
+		std::string getModes(void) const;
 };
 
 #endif
