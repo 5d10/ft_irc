@@ -1,6 +1,3 @@
 Server.cpp
 > EraseClient, remove from channel, i->second->broadcast(quit_message);//? doesn't seem to reflect on client?
 > ::cycle, quan detectem que un socket ha deixat d'estar operatiu, hauriem d'enviar un missatge de QUIT adequat als altres clients
-
-INVITE
-> Encara no enviem el missatge per a la opció 'o'

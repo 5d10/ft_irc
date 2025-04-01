@@ -554,11 +554,10 @@ void Task::mode(Client &c, Server &s)
 						c.AddToWriteBuffer(ERR_NOSUCHNICK(c.nickname, *param));
 						return; }
 					target_search->second  = (args[1][0] == '+');
-				//c.AddToWriteBuffer(RPL_CHANNELMODEIS(c.nickname, chan.name, 'o', target_search->second ? "true" : "false");
-				//Tengo que aclarar el caso donde la info es del usuario
-					//RPL_UMODEIS existe, pero no tengo del todo claro el mensaje
-					//s.registered.at(*param)->AddToWriteBuffer(RPL_UMODEIS(*param, (target_search->second ? std::string("o") : std::string("(none)"))));
-						//Cannot distinguish channel
+				
+					std::string msg = ':' + c.nickname + '!' + c.username + "@localhost MODE " + target_search->first + (target_search->second ? " +o" : " -o") + "\r\n";
+					c.AddToWriteBuffer(msg);
+					s.registered.at(*param)->AddToWriteBuffer(msg);
 				}
 				++param;
 				break;
@@ -566,7 +565,7 @@ void Task::mode(Client &c, Server &s)
 				if (args[1][0] == '-') {
 					chan.isPasswordNeeded = false;
 					chan.password.clear();
-					ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "\"\"(none)"));
+					ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "false"));
 				}
 				else
 				{
@@ -577,7 +576,7 @@ void Task::mode(Client &c, Server &s)
 						c.AddToWriteBuffer(ERR_KEYSET(c.nickname, chan.name));
 					chan.isPasswordNeeded = true;
 					chan.password = *param;
-					ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  chan.password));
+					ch_search->second.broadcast(RPL_CHANNELMODEIS(c.nickname, chan.name, 'k',  "true"));
 					++param;
 				}
 				break;
