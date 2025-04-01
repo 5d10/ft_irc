@@ -273,7 +273,7 @@ int Server::cycle()
 
 Server::~Server()
 {
-	std::cout << pollfds.size() << std::endl;
+	std::cout << "We have " << pollfds.size() << "FDs" << std::endl;
 	for (ssize_t i = pollfds.size() - 1; i >= 0; i--)
 	{
 		std::cout << "Disconnecting FD " << pollfds[i].fd << std::endl;
