@@ -15,3 +15,5 @@ Server.cpp
 Task.cpp
 > Random default quit messages
 
+PING
+> Instead of checking for a specific message, just return it as it is, which we basically are kinda doing
