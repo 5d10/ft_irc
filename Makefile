@@ -8,7 +8,7 @@ CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98 -pedantic-errors -I headers/
 
 ifeq ($(DEBUG), TRUE)
-	CFLAGS += -g -fsanitize=address -D DEBUG=1
+	CFLAGS += -g -fsanitize=address -D DEBUG=1 -D COLOR_ENABLED=0
 endif
 
 SRC = 	main.cpp \
@@ -16,7 +16,7 @@ SRC = 	main.cpp \
 		Client.cpp \
 		Channel.cpp \
 		Task.cpp \
-		utils.cpp\
+		utils.cpp \
 
 HEAD =	Channel.hpp \
 		Client.hpp \

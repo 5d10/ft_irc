@@ -78,14 +78,18 @@ std::string Client::format_buffer(std::string buffer) const
 		switch(buffer[i])
 		{
 			case '\r':
-				s += COLOR_GRAY;
+				if (COLOR_ENABLED)
+					s += COLOR_GRAY;
 				s += "\\r";
-				s += COLOR_NONE;
+				if (COLOR_ENABLED)
+					s += COLOR_NONE;
 				break;
 			case '\n':
-				s += COLOR_GRAY;
+				if (COLOR_ENABLED)
+					s += COLOR_GRAY;
 				s += "\\n";
-				s += COLOR_NONE;
+				if (COLOR_ENABLED)
+					s += COLOR_NONE;
 				break;
 			default:
 				s += buffer[i];
@@ -96,12 +100,19 @@ std::string Client::format_buffer(std::string buffer) const
 
 void Client::print_buffer(std::string buffer) const
 {
-	std::cout << COLOR_PINK << "Buffer data: " << COLOR_NONE << "'" << format_buffer(buffer) << "'" << COLOR_NONE << std::endl;
+	if (COLOR_ENABLED)
+		std::cout << COLOR_PINK;
+	std::cout << "Buffer data: ";
+	if (COLOR_ENABLED)
+		std::cout << COLOR_NONE;
+	std::cout << "'" << format_buffer(buffer) << "'";
+	std::cout << std::endl;
 }
 
 ssize_t Client::Read()
 {
 	char buffer[1];
+	std::memset(buffer, 0, sizeof(buffer));
 	ssize_t bytes_read = recv(fd, buffer, sizeof(buffer), MSG_DONTWAIT);
 	while (bytes_read > 0 && buffer[0] != '\n')
 	{
@@ -111,7 +122,12 @@ ssize_t Client::Read()
 	if (bytes_read <= 0)
 		buffer[0] = 0;
 	rd_buff += buffer[0];
-	std::cout << COLOR_YELLOW << "[SERVER] << Read of FD " << fd << COLOR_NONE << std::endl;
+	if (COLOR_ENABLED)
+		std::cout << COLOR_YELLOW;
+	std::cout << "[SERVER] << Read of FD " << fd;
+	if (COLOR_ENABLED)
+		std::cout << COLOR_NONE;
+	std::cout << std::endl;
 	print_buffer(rd_buff);
 	return bytes_read;
 }
@@ -137,7 +153,12 @@ ssize_t Client::Send()
 	//}
 	//return out;
 
-	std::cout << COLOR_CYAN << "[SERVER] >> Write to FD " << fd << COLOR_NONE << std::endl;
+	if (COLOR_ENABLED)
+		std::cout << COLOR_CYAN;
+	std::cout << "[SERVER] >> Write to FD " << fd;
+	if (COLOR_ENABLED)
+		std::cout << COLOR_NONE;
+	std::cout << std::endl;
 	print_buffer(wr_buff);
 	char buffer[1];
 	buffer[0] = wr_buff.c_str()[0];
@@ -154,7 +175,12 @@ ssize_t Client::Send()
 	}
 	if (wr_buff.length() > 0)
 	{
-		std::cout << COLOR_RED << "WARNING: Buffer not empty after write to FD " << fd << "!" << COLOR_NONE << std::endl;
+		if (COLOR_ENABLED)
+			std::cout << COLOR_RED;
+		std::cout << "WARNING: Buffer not empty after write to FD " << fd << "!";
+		if (COLOR_ENABLED)
+			std::cout << COLOR_NONE;
+		std::cout << std::endl;
 		print_buffer(wr_buff);
 	}
 	return out;

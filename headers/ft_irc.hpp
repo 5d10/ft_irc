@@ -22,4 +22,8 @@
 #  define DEBUG 0
 # endif
 
+# ifndef COLOR_ENABLED
+#  define COLOR_ENABLED 1
+# endif
+
 #endif
