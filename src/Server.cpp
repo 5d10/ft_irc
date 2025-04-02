@@ -201,6 +201,8 @@ int Server::cycle()
 
 			#if DEBUG
 				std::cout << "Pollret: " << pollret << " |fd: " << current.fd << " |revents " << current.revents <<std::endl;
+				if (current.fd != client.fd)
+					std::cout << "POLLFD DOES NOT CORRESPOND TO CLIENT (" << current.fd << ", " << client.fd << ')' << std::endl;
 			#endif
 
 			if (!(current.revents & current.events))
