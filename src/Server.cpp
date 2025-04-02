@@ -103,7 +103,7 @@ void Server::EraseClient(Client &client, std::string quit_message)
 	}
 	//then delete it
 	#if DEBUG
-		std::cout << "Erase: closing fd " << pollfds[i].fd << std::endl;
+		std::cout << "Erase: closing FD (pollfd = " << (pollfds.begin()+i)->fd << ", list = " << it->fd << ')' << std::endl;
 	#endif
 	close(it->fd);
 	pollfds.erase(pollfds.begin() + i);
@@ -235,6 +235,8 @@ int Server::cycle()
 						return out;
 					else if (out == 2) /*bro got deleted*/ {
 						--pollret;
+						--monit_size;
+						--i;
 						#if DEBUG
 							std::cout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," << std::endl;
 						#endif
@@ -252,6 +254,7 @@ int Server::cycle()
 					if (out) {
 						--pollret;
 						--monit_size;
+						--i;
 						#if DEBUG
 							std::cout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," << std::endl;
 						#endif
