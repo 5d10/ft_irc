@@ -32,6 +32,7 @@ class Client
         const int &GetFD() const;
         const std::string &GetReadBuffer() const;
         const std::string &GetWriteBuffer() const;
+		const std::string GetNextCmd();
 
         void ClearReadBuffer();
         void AddToWriteBuffer(std::string msg);
