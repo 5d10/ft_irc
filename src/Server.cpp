@@ -225,6 +225,13 @@ int Server::cycle()
 				AcceptClient();
 			else if (current.revents & current.events)
 			{
+				if (current.revents & POLLHUP)
+				{
+					EraseClient(client, "");
+					--pollret;
+					--monit_size;
+					continue;
+				}
 				if (current.revents & POLLIN)
 				{
 					#if DEBUG
@@ -236,7 +243,7 @@ int Server::cycle()
 					else if (out == 2) /*bro got deleted*/ {
 						--pollret;
 						--monit_size;
-						--i;
+						//--i;
 						#if DEBUG
 							std::cout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," << std::endl;
 						#endif
@@ -254,7 +261,7 @@ int Server::cycle()
 					if (out) {
 						--pollret;
 						--monit_size;
-						--i;
+						//--i;
 						#if DEBUG
 							std::cout << ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,," << std::endl;
 						#endif
