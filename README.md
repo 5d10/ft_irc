@@ -1,7 +1,7 @@
 Introduction
 -
 #
-This is (or "was" onec they have changed the Common Core) the final project with C++ that is done at 42 school, in it students do a simple Internet Relay Chat server.
+This is (or "was" once they have changed the Common Core) the final project with C++ that is done at 42 school, in it students do a simple Internet Relay Chat server.
 The project's subject asks to make it functional for a client that the group choses to, which in our case was Hexchat.
 
 # Building and runnnig
